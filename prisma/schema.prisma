@@ -1,0 +1,567 @@
+// AI Studio Scheduler — Prisma schema
+// Clean-room rebuild preserving the domain of github.com/bwilmsh/cluster-v1.
+// All OAuth tokens and credentials are AES-256-GCM encrypted at the application layer.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  PRO
+  MAX
+}
+
+enum ItemType {
+  EVENT
+  TASK
+  APPOINTMENT
+  HABIT
+}
+
+enum EventStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum EventPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKDAYS
+  WEEKLY
+  CUSTOM
+}
+
+enum HabitIdealTime {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum HabitPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum HabitEntryStatus {
+  SCHEDULED
+  COMPLETED
+  SKIPPED
+  RESCHEDULED
+}
+
+enum DueDatePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum DueDateStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+}
+
+enum DueDateCategory {
+  ASSIGNMENT
+  EXAM
+  WORK
+  PERSONAL
+}
+
+enum AutoRunAction {
+  SEND_EMAIL
+  CREATE_CALENDAR_EVENT
+  MARK_TASK_COMPLETE
+  SEND_NOTIFICATION
+}
+
+enum WidgetType {
+  STAT
+  AGENTS_GRID
+  ACTIVITY_FEED
+  AGENT_MEMORY
+  TEXT
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+}
+
+enum RunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum DeliveryType {
+  CHAT
+  EMAIL
+}
+
+enum ScheduledEmailStatus {
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+}
+
+// ─── Core Auth ───────────────────────────────────────────────────────────
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String         @default("")
+  passwordHash String?
+  plan         Plan           @default(FREE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  agents         Agent[]
+  groupChats     GroupChat[]
+  messages       Message[]
+  integrations   Integration[]
+  oauthConfigs   OAuthConfig[]
+  widgets        Widget[]
+  goals          Goal[]
+  habits         Habit[]
+  dueDates       DueDate[]
+  events         Event[]
+  webCredentials WebCredential[]
+  automations    Automation[]
+  scheduledEmails ScheduledEmail[]
+  browseActivities BrowseActivity[]
+  workflows      Workflow[]
+}
+
+// ─── Agents & Chat ──────────────────────────────────────────────────────
+
+model Agent {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  role         String           @default("general") // "booking" | "customer" | "general"
+  setupAnswers Json?
+  memory       String?
+  status       String           @default("active")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  messages     Message[]
+  groupMembers GroupChatMember[]
+  files        AgentFile[]
+  automations  Automation[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   // "user" | "assistant" | "system"
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([agentId, createdAt])
+}
+
+model AgentFile {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileType  String   // "csv" | "sheet" | "txt"
+  content   String
+  createdAt DateTime @default(now())
+}
+
+// ─── Group Chat (waterfall handoff) ─────────────────────────────────────
+
+model GroupChat {
+  id        String              @id @default(cuid())
+  name       String
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  members   GroupChatMember[]
+  messages  GroupChatMessage[]
+
+  @@index([userId])
+}
+
+model GroupChatMember {
+  id          String    @id @default(cuid())
+  groupChatId String
+  groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+  agentId     String?
+  agent       Agent?    @relation(fields: [agentId], references: [id])
+  userId      String?
+  type        String    // "agent" | "user"
+  name        String    // display name
+
+  @@index([groupChatId])
+}
+
+model GroupChatMessage {
+  id          String    @id @default(cuid())
+  groupChatId String
+  groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+  senderName  String
+  senderRole  String    // "user" | "assistant"
+  role        String    // "user" | "assistant"
+  content     String
+  createdAt   DateTime  @default(now())
+
+  @@index([groupChatId, createdAt])
+}
+
+// ─── Integrations (OAuth, encrypted) ────────────────────────────────────
+
+model OAuthConfig {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String   // "google" | "slack" | "notion"
+  clientId     String   // AES-256-GCM encrypted
+  clientSecret String   // AES-256-GCM encrypted
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, provider])
+}
+
+model Integration {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String    // "google" | "slack" | "notion"
+  accessToken  String    // AES-256-GCM encrypted
+  refreshToken String?   // AES-256-GCM encrypted
+  accountEmail String?
+  accountName  String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, provider])
+}
+
+model WebCredential {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  siteName  String
+  siteUrl   String
+  username  String
+  password  String   // AES-256-GCM encrypted
+  createdAt DateTime @default(now())
+}
+
+// ─── Widgets (rendered from [WIDGET] sentinel) ──────────────────────────
+
+model Widget {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  type        WidgetType
+  config      Json        @default("{}")
+  size        String      @default("md") // "sm" | "md" | "lg"
+  order       Int         @default(0)
+  lastData    Json?
+  lastUpdated DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId, order])
+}
+
+// ─── Goals + AutoRun ────────────────────────────────────────────────────
+
+model Goal {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goalText        String
+  deadline        DateTime?
+  isActive        Boolean        @default(true)
+  visibleAgentIds Json           @default("[]")
+  autoRun         DueDateAutoRun?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([userId, isActive])
+}
+
+// ─── Habits + auto-schedule into Events ─────────────────────────────────
+
+model Habit {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  notes           String?
+  frequency       HabitFrequency   @default(DAILY)
+  idealTime       HabitIdealTime   @default(MORNING)
+  timeRangeStart  String?          // "09:00"
+  timeRangeEnd    String?          // "09:15"
+  daysOfWeek      String[]         @default([]) // ["MON","WED","FRI"]
+  isActive        Boolean          @default(true)
+  autoReschedule  Boolean          @default(true)
+  keywords        String[]         @default([])
+  priorityLevel   HabitPriority    @default(MEDIUM)
+  color           String?
+  streak          Int              @default(0)
+  longestStreak   Int              @default(0)
+  priority        Int              @default(3)
+  rrule           String?          // RFC5545 recurrence
+  cadence         String?          // "daily" | "weekly" fallback
+  timeOfDay       String?          // "08:30:00"
+  endTime         String?          // "09:00:00"
+  durationMinutes Int              @default(30)
+  timezone        String?          // IANA tz
+  active          Boolean          @default(true)
+  materialize     Boolean          @default(true) // create Event occurrences
+  showAsBusy      Boolean          @default(true)
+  hideDetails     Boolean          @default(false)
+  scheduleReason  String?
+  skippedDates    Json             @default("[]") // ISO date strings
+  lastCompleted   DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  events  Event[]
+  entries HabitEntry[]
+
+  @@index([userId, active])
+}
+
+model HabitEntry {
+  id              String           @id @default(cuid())
+  habitId         String
+  habit           Habit            @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  scheduledDate   DateTime
+  scheduledStart  DateTime
+  scheduledEnd    DateTime
+  status          HabitEntryStatus @default(SCHEDULED)
+  wasRescheduled  Boolean          @default(false)
+  completedAt     DateTime?
+  event           Event?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([habitId, scheduledDate])
+  @@index([habitId, scheduledDate])
+}
+
+// ─── Unified Event model (events / tasks / appointments / habits) ───────
+
+model Event {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title              String
+  description        String?
+  startTime          DateTime
+  endTime           DateTime?
+  location           String?
+  googleEventId      String?
+  itemType           ItemType         @default(EVENT)
+  status             EventStatus      @default(TODO)
+  priority           EventPriority    @default(MEDIUM)
+  reminderTime       DateTime?
+  reminderSent       Boolean          @default(false)
+  assignee           String?
+  tags               String[]         @default([])
+  habitId            String?
+  habit              Habit?           @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  habitOccurrenceAt  DateTime?
+  habitLocked        Boolean          @default(false)
+  showAsBusy         Boolean          @default(true)
+  hideDetails        Boolean          @default(false)
+  scheduleReason     String?
+  habitEntryId       String?          @unique
+  habitEntry         HabitEntry?      @relation(fields: [habitEntryId], references: [id], onDelete: SetNull)
+  autoRun            DueDateAutoRun?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([userId, startTime])
+  @@index([itemType, status])
+  @@index([habitId])
+  @@index([habitOccurrenceAt])
+}
+
+// ─── AutoRun (linked to Event OR Goal) ──────────────────────────────────
+
+model DueDateAutoRun {
+  id         String          @id @default(cuid())
+  eventId    String?         @unique
+  event      Event?          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  goalId     String?         @unique
+  goal       Goal?           @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  enabled    Boolean          @default(false)
+  actionType AutoRunAction
+  config     Json            @default("{}")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+// ─── Due Dates (assignments/exams/work) ────────────────────────────────
+
+model DueDate {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueDate     DateTime
+  dueTime     String
+  priority    DueDatePriority  @default(MEDIUM)
+  status      DueDateStatus    @default(PENDING)
+  category    DueDateCategory  @default(PERSONAL)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([userId, dueDate])
+  @@index([userId, status])
+}
+
+// ─── Scheduled Emails ───────────────────────────────────────────────────
+
+model ScheduledEmail {
+  id             String                @id @default(cuid())
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  to             String
+  subject        String
+  body           String
+  sendAt         DateTime
+  status         ScheduledEmailStatus  @default(SCHEDULED)
+  sentAt         DateTime?
+  gmailMessageId String?
+  error          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([userId, status, sendAt])
+  @@index([sendAt])
+}
+
+// ─── Automations / Workflows engine ────────────────────────────────────
+
+model AutomationTemplate {
+  id          String        @id
+  name        String
+  description String
+  category    String
+  icon        String?
+  isOfficial   Boolean       @default(false)
+  isApproved   Boolean       @default(false)
+  definition  Json
+  createdBy   String?
+  createdAt   DateTime      @default(now())
+  automations Automation[]
+}
+
+model Automation {
+  id             String              @id @default(cuid())
+  userId         String
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          Agent               @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  templateId     String?
+  template       AutomationTemplate? @relation(fields: [templateId], references: [id])
+  name           String
+  goal           String?
+  variables      Json                @default("{}")
+  schedule       String?
+  active         Boolean             @default(true)
+  deliveryType   DeliveryType        @default(CHAT)
+  deliveryTarget String?
+  lastRunAt      DateTime?
+  lastRunStatus  String?
+  lastRunResult  String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  runs           AutomationRun[]
+
+  @@index([userId, active])
+}
+
+model AutomationRun {
+  id           String     @id @default(cuid())
+  automationId String
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+  status       String
+  steps        Json       @default("[]")
+  finalResult  String?
+  deliveredTo  String?
+}
+
+model Workflow {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  nodes         Json           @default("[]")
+  edges         Json           @default("[]")
+  status        WorkflowStatus @default(DRAFT)
+  lastRunAt     DateTime?
+  lastRunStatus String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  runs          WorkflowRun[]
+
+  @@index([userId, status])
+}
+
+model WorkflowRun {
+  id          String    @id @default(cuid())
+  workflowId  String
+  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  status      RunStatus
+  result      String?
+}
+
+// ─── Browse activity ────────────────────────────────────────────────────
+
+model BrowseActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId   String?
+  agentName String?
+  url       String
+  domain    String
+  summary   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
