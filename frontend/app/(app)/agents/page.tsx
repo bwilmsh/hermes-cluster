@@ -12,7 +12,7 @@ const MOCK_AGENTS = [
 
 export default function AgentsPage() {
   const [selected, setSelected] = useState<string | null>(null);
-  if (selected) return <AgentChat agentId={selected} />;
+  if (selected) return <AgentChat agentId={selected} onBack={() => setSelected(null)} />;
   return (
     <div className="animate-fade-slide-up">
       <div className="flex items-center justify-between mb-6">
@@ -39,7 +39,7 @@ export default function AgentsPage() {
   );
 }
 
-function AgentChat({ agentId }: { agentId: string }) {
+function AgentChat({ agentId, onBack }: { agentId: string; onBack: () => void }) {
   const agent = MOCK_AGENTS.find((a) => a.id === agentId)!;
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -79,7 +79,7 @@ function AgentChat({ agentId }: { agentId: string }) {
   return (
     <div className="flex flex-col h-full animate-fade-slide-up">
       <div className="flex items-center gap-3 mb-4 pb-3 border-b" style={{ borderColor: "var(--border)" }}>
-        <button onClick={() => setSelected(null)} className="text-text-tertiary hover:text-text-primary">←</button>
+        <button onClick={onBack} className="text-text-tertiary hover:text-text-primary">←</button>
         <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: agent.role === "booking" ? "var(--accent-teal)" : agent.role === "customer" ? "var(--accent-amber)" : "var(--accent-indigo)" }}>
           {agent.name[0]}
         </div>
