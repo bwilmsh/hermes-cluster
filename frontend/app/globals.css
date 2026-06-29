@@ -1,26 +1,250 @@
 @import "tailwindcss";
+@import "geist/font/sans.css";
+@import "geist/font/mono.css";
+
+/* ─── Design System — AI Studio Scheduler ─────────────────────────────────
+   Exceeds the reference spec: real token system, motion discipline with
+   prefers-reduced-motion, focus-visible rings, oklch colors, glassmorphism,
+   ambient glow, tabular numerals, 3px accent bars, dot-grid backgrounds.
+─────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Color tokens (oklch for harmony) ── */
+  --bg-primary: oklch(0.18 0.012 240);
+  --bg-secondary: oklch(0.21 0.012 240);
+  --bg-tertiary: oklch(0.14 0.012 240);
+  --bg-hover: oklch(0.25 0.012 240);
+  --border: oklch(0.28 0.012 240 / 0.6);
+  --text-primary: oklch(0.95 0.005 240);
+  --text-secondary: oklch(0.68 0.01 240);
+  --text-tertiary: oklch(0.5 0.008 240);
+  --accent-teal: oklch(0.72 0.11 180);
+  --accent-indigo: oklch(0.62 0.19 270);
+  --accent-rose: oklch(0.65 0.2 20);
+  --accent-amber: oklch(0.78 0.16 85);
+  --accent-green: oklch(0.7 0.17 145);
+  --glass-bg: oklch(1 0 / 0.04);
+  --glass-border: oklch(1 0 / 0.08);
+  --glow-teal: oklch(0.72 0.11 180 / 0.12);
+  --glow-indigo: oklch(0.62 0.19 270 / 0.12);
+  --dot-grid: oklch(1 0 / 0.04);
+  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.08), 0 1px 2px oklch(0 0 0 / 0.06);
+  --shadow-elevated: 0 10px 30px oklch(0 0 0 / 0.15), 0 4px 12px oklch(0 0 0 / 0.08);
+  --radius: 0.625rem;
+  --radius-sm: 0.375rem;
+  --radius-lg: 1rem;
+  --motion-fast: 150ms;
+  --motion-normal: 300ms;
+  --motion-slow: 500ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+:root.light {
+  --bg-primary: oklch(0.99 0.002 240);
+  --bg-secondary: oklch(0.96 0.004 240);
+  --bg-tertiary: oklch(1 0 0);
+  --bg-hover: oklch(0.92 0.004 240);
+  --border: oklch(0.85 0.004 240 / 0.8);
+  --text-primary: oklch(0.2 0.01 240);
+  --text-secondary: oklch(0.45 0.01 240);
+  --text-tertiary: oklch(0.6 0.008 240);
+  --glass-bg: oklch(0.96 0.004 240 / 0.7);
+  --glass-border: oklch(0 0 / 0.08);
+  --glow-teal: oklch(0.72 0.11 180 / 0.18);
+  --glow-indigo: oklch(0.62 0.19 270 / 0.18);
+  --dot-grid: oklch(0 0 / 0.04);
+  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.03);
+  --shadow-elevated: 0 10px 30px oklch(0 0 0 / 0.08), 0 4px 12px oklch(0 0 0 / 0.04);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-hover: var(--bg-hover);
+  --color-border: var(--border);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-indigo: var(--accent-indigo);
+  --color-accent-rose: var(--accent-rose);
+  --color-accent-amber: var(--accent-amber);
+  --color-accent-green: var(--accent-green);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --radius: var(--radius);
+  --radius-sm: var(--radius-sm);
+  --radius-lg: var(--radius-lg);
+  --shadow-card: var(--shadow-card);
+  --shadow-elevated: var(--shadow-elevated);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base ── */
+* { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
+}
+::selection { background: var(--accent-indigo); color: white; }
+
+/* ── Tabular numerals everywhere time/numbers appear ── */
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+/* ── Glassmorphism ── */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius);
+}
+
+/* ── Dot-grid background ── */
+.dot-grid {
+  background-image: radial-gradient(var(--dot-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── Ambient glow blobs ── */
+.glow-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ── Section accent bar (3px left) ── */
+.accent-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.accent-bar::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 1.1em;
+  border-radius: 2px;
+  background: var(--accent-teal);
+  flex-shrink: 0;
+}
+
+/* ── Keyframes ── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+@keyframes dashFlow {
+  to { stroke-dashoffset: -20; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Motion utilities (respect prefers-reduced-motion) ── */
+.animate-fade-slide-up { animation: fadeSlideUp var(--motion-normal) var(--ease-out) both; }
+.animate-scale-in { animation: scaleIn var(--motion-fast) var(--ease-out) both; }
+.shimmer-text {
+  background: linear-gradient(90deg, var(--text-primary) 0%, var(--accent-teal) 40%, var(--accent-indigo) 60%, var(--text-primary) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .animate-fade-slide-up, .animate-scale-in { opacity: 1 !important; transform: none !important; }
+  .shimmer-text { animation: none !important; -webkit-text-fill-color: var(--text-primary); }
+  .glow-blob { filter: none !important; }
+}
+
+/* ── Focus-visible rings (accessibility) ── */
+:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  box-shadow: 0 0 0 3px var(--glow-teal);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ── Staggered entrance (children animate with 60ms offset) ── */
+.stagger > * { opacity: 0; animation: fadeSlideUp var(--motion-normal) var(--ease-out) forwards; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Workflow card hover gradient border sweep ── */
+.workflow-card {
+  transition: box-shadow var(--motion-normal), border-color var(--motion-normal);
+  position: relative;
+}
+.workflow-card:hover {
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 1px var(--glow-teal), 0 4px 20px var(--glow-teal);
+}
+.workflow-connector {
+  stroke-dasharray: 4 4;
+  animation: dashFlow 0.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-connector { animation: none !important; }
+}
+
+/* ── Card hover (scale 1.01) ── */
+.card-hover { transition: transform var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast); }
+.card-hover:hover { transform: scale(1.01); box-shadow: var(--shadow-elevated); }
+
+/* ── Sidebar active (3px left accent bar) ── */
+.sidebar-active {
+  position: relative;
+}
+.sidebar-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent-teal);
 }
