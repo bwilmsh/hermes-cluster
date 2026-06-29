@@ -38,7 +38,7 @@ goalsRouter.post("/", async (req: AuthedRequest, res: Response) => {
       ...data,
       ...(deadline ? { deadline: new Date(deadline) } : {}),
       userId: req.user!.id,
-      autoRun: autoRun ? { create: autoRun } : undefined,
+      autoRun: autoRun ? { create: { ...autoRun, config: autoRun.config as any } } : undefined,
     },
     include: { autoRun: true },
   });

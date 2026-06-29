@@ -37,7 +37,7 @@ automationsRouter.post("/", async (req: AuthedRequest, res: Response) => {
   if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
   const d = parsed.data;
   const automation = await prisma.automation.create({
-    data: { name: d.name, agentId: d.agentId, templateId: d.templateId, goal: d.goal, variables: d.variables, schedule: d.schedule, active: d.active, deliveryType: d.deliveryType, deliveryTarget: d.deliveryTarget, userId: req.user!.id },
+    data: { name: d.name, agentId: d.agentId, templateId: d.templateId, goal: d.goal, variables: d.variables as any, schedule: d.schedule, active: d.active, deliveryType: d.deliveryType, deliveryTarget: d.deliveryTarget, userId: req.user!.id },
   });
   res.status(201).json({ automation });
 });

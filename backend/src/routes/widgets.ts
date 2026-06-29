@@ -26,7 +26,7 @@ widgetsRouter.post("/", async (req: AuthedRequest, res: Response) => {
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
   const widget = await prisma.widget.create({
-    data: { ...parsed.data, userId: req.user!.id },
+    data: { ...parsed.data, config: parsed.data.config as any, userId: req.user!.id },
   });
   res.status(201).json({ widget });
 });

@@ -31,8 +31,8 @@ agentsRouter.post("/", async (req: AuthedRequest, res: Response) => {
     return;
   }
   const agent = await prisma.agent.create({
-    data: { ...parsed.data, userId: req.user!.id },
-  });
+      data: { ...parsed.data, setupAnswers: parsed.data.setupAnswers as any, userId: req.user!.id },
+    });
   res.status(201).json({ agent });
 });
 
