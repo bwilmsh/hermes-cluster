@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "geist/font/sans.css";
-@import "geist/font/mono.css";
+
+/* Geist fonts loaded via next/font in layout.tsx (GeistSans.variable / GeistMono.variable) */
 
 /* ─── Design System — AI Studio Scheduler ─────────────────────────────────
    Exceeds the reference spec: real token system, motion discipline with
