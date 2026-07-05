@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type ViewMode = "day" | "week" | "month" | "list" | "kanban";
+type ViewMode = "day" | "week" | "month";
 
 interface SchedEvent {
   id: string;
@@ -48,7 +48,7 @@ export default function SchedulerPage() {
         </div>
         {/* View switcher */}
         <div className="flex gap-1 p-1 rounded-lg" style={{ background: "var(--bg-tertiary)" }}>
-          {(["day", "week", "month", "list", "kanban"] as ViewMode[]).map((v) => (
+          {(["day", "week", "month"] as ViewMode[]).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
@@ -61,49 +61,113 @@ export default function SchedulerPage() {
         </div>
       </div>
 
-      {view === "week" && <WeekView events={MOCK} today={today} />}
+      {view === "week" && <WeekView events={MOCK} />}
       {view === "day" && <DayView events={MOCK.filter((e) => e.day === today)} />}
       {view === "month" && <MonthView events={MOCK} />}
-      {view === "list" && <ListView events={MOCK} />}
-      {view === "kanban" && <KanbanView events={MOCK} />}
     </div>
   );
 }
 
-function WeekView({ events, today }: { events: SchedEvent[]; today: string }) {
+function startOfWeek(date: Date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function WeekView({ events }: { events: SchedEvent[] }) {
+  const [weekRef, setWeekRef] = useState(() => new Date());
+  const weekStart = startOfWeek(weekRef);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+
+  const now = new Date();
+
+  const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+  const sameYear = weekStart.getFullYear() === weekEnd.getFullYear();
+  const weekLabel = sameMonth && sameYear
+    ? `${weekStart.toLocaleString("en-US", { month: "long", day: "numeric" })} – ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`
+    : sameYear
+      ? `${weekStart.toLocaleString("en-US", { month: "short", day: "numeric" })} – ${weekEnd.toLocaleString("en-US", { month: "short", day: "numeric" })}, ${weekEnd.getFullYear()}`
+      : `${weekStart.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" })} – ${weekEnd.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+
+  const goToPrevWeek = () => {
+    const d = new Date(weekRef);
+    d.setDate(d.getDate() - 7);
+    setWeekRef(d);
+  };
+  const goToNextWeek = () => {
+    const d = new Date(weekRef);
+    d.setDate(d.getDate() + 7);
+    setWeekRef(d);
+  };
+  const goToThisWeek = () => setWeekRef(new Date());
+
   return (
-    <div className="grid grid-cols-7 gap-1">
-      {DAYS.map((day) => {
-        const isToday = day === today;
-        const dayEvents = events.filter((e) => e.day === day);
-        return (
-          <div
-            key={day}
-            className={`min-h-[200px] glass p-2 ${isToday ? "ring-1" : ""}`}
-            style={isToday ? { boxShadow: "0 0 0 1px var(--glow-indigo), 0 0 20px var(--glow-indigo)" } : {}}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              {isToday && <div style={{ width: 3, height: 16, background: "var(--accent-teal)", borderRadius: 2 }} />}
-              <span className={`text-xs font-medium ${isToday ? "text-text-primary" : "text-text-tertiary"}`}>{day}</span>
+    <div>
+      {/* Week header with date + nav */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+            {weekLabel}
+          </h2>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+            Week of {weekStart.toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={goToPrevWeek} className="px-3 py-1 rounded text-sm" style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
+            ← Prev
+          </button>
+          <button onClick={goToThisWeek} className="px-3 py-1 rounded text-sm" style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
+            Today
+          </button>
+          <button onClick={goToNextWeek} className="px-3 py-1 rounded text-sm" style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
+            Next →
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {DAYS.map((day, i) => {
+          const dayDate = new Date(weekStart);
+          dayDate.setDate(weekStart.getDate() + i);
+          const isToday = dayDate.toDateString() === now.toDateString();
+          const dayEvents = events.filter((e) => e.day === day);
+          return (
+            <div
+              key={day}
+              className={`min-h-[200px] glass p-2 ${isToday ? "ring-1" : ""}`}
+              style={isToday ? { boxShadow: "0 0 0 1px var(--glow-indigo), 0 0 20px var(--glow-indigo)" } : {}}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {isToday && <div style={{ width: 3, height: 16, background: "var(--accent-teal)", borderRadius: 2 }} />}
+                <span className={`text-xs font-medium ${isToday ? "text-text-primary" : "text-text-tertiary"}`}>{day}</span>
+                <span className={`text-xs tnum ${isToday ? "text-text-primary font-semibold" : "text-text-tertiary"}`}>
+                  {dayDate.getDate()}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {dayEvents.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="px-2 py-1.5 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{
+                      background: "var(--bg-hover)",
+                      borderLeft: `2px solid ${TYPE_COLORS[ev.itemType]}`,
+                    }}
+                  >
+                    <div className="tnum text-text-tertiary">{ev.startTime}</div>
+                    <div className="font-medium truncate">{ev.title}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="space-y-1">
-              {dayEvents.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="px-2 py-1.5 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity"
-                  style={{
-                    background: "var(--bg-hover)",
-                    borderLeft: `2px solid ${TYPE_COLORS[ev.itemType]}`,
-                  }}
-                >
-                  <div className="tnum text-text-tertiary">{ev.startTime}</div>
-                  <div className="font-medium truncate">{ev.title}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -158,67 +222,4 @@ function MonthView({ events }: { events: SchedEvent[] }) {
   );
 }
 
-function ListView({ events }: { events: SchedEvent[] }) {
-  return (
-    <div className="glass p-4">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-text-tertiary border-b" style={{ borderColor: "var(--border)" }}>
-            <th className="py-2 font-medium">Time</th>
-            <th className="py-2 font-medium">Title</th>
-            <th className="py-2 font-medium">Type</th>
-            <th className="py-2 font-medium">Priority</th>
-            <th className="py-2 font-medium">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {events.map((ev) => (
-            <tr key={ev.id} className="border-b hover:bg-bg-hover transition-colors" style={{ borderColor: "var(--border)" }}>
-              <td className="py-2 tnum text-text-secondary">{ev.startTime}</td>
-              <td className="py-2">{ev.title}</td>
-              <td className="py-2 capitalize">{ev.itemType.toLowerCase()}</td>
-              <td className="py-2 capitalize">{ev.priority.toLowerCase()}</td>
-              <td className="py-2 capitalize">{ev.status.toLowerCase().replace("_", "-")}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
-function KanbanView({ events }: { events: SchedEvent[] }) {
-  const columns = [
-    { id: "TODO", title: "To Do", color: "var(--text-tertiary)" },
-    { id: "IN_PROGRESS", title: "In Progress", color: "var(--accent-amber)" },
-    { id: "DONE", title: "Done", color: "var(--accent-green)" },
-  ];
-  return (
-    <div className="grid md:grid-cols-3 gap-4">
-      {columns.map((col) => {
-        const colEvents = events.filter((e) => e.status === col.id);
-        return (
-          <div key={col.id} className="glass p-3">
-            <div className="flex items-center gap-2 mb-3">
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: col.color }} />
-              <h3 className="text-sm font-medium">{col.title}</h3>
-              <span className="text-xs text-text-tertiary tnum">{colEvents.length}</span>
-            </div>
-            <div className="space-y-2">
-              {colEvents.map((ev) => (
-                <div key={ev.id} className="p-3 rounded-lg cursor-pointer hover:opacity-80 transition-opacity" style={{ background: "var(--bg-hover)", borderLeft: `3px solid ${TYPE_COLORS[ev.itemType]}` }}>
-                  <div className="text-sm font-medium mb-1">{ev.title}</div>
-                  <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                    <span className="tnum">{ev.startTime}</span>
-                    {ev.tags?.map((t) => <span key={t} className="px-1.5 py-0.5 rounded" style={{ background: "var(--bg-tertiary)" }}>{t}</span>)}
-                  </div>
-                </div>
-              ))}
-              {colEvents.length === 0 && <p className="text-xs text-text-tertiary text-center py-4">No items</p>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
