@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-/* ── Icons (line-art, 16x16) ── */
+/* ── Icons (line-art, 24x24) ── */
 function Icon({ name, size = 20 }: { name: string; size?: number }) {
   const icons: Record<string, React.ReactNode> = {
     dashboard: <path d="M3 3H10V10H3V3ZM14 3H21V8H14V3ZM14 12H21V21H14V12ZM3 14H10V21H3V14Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />,
@@ -31,142 +29,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
   );
 }
 
-/* ── Sidebar nav items ── */
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/projects", label: "Projects", icon: "projects" },
-  { href: "/scheduler", label: "Calendar", icon: "calendar" },
-  { href: "/tasks", label: "Tasks", icon: "tasks" },
-  { href: "/team", label: "Team", icon: "team" },
-  { href: "/analytics", label: "Analytics", icon: "analytics" },
-  { href: "/settings", label: "Settings", icon: "settings" },
-  { href: "/help", label: "Help", icon: "help" },
-];
-
-function Sidebar() {
-  const pathname = usePathname();
-  return (
-    <aside
-      className="flex h-full flex-col items-center shrink-0"
-      style={{ width: 72, background: "var(--bg-secondary)", borderRight: "1px solid var(--border)" }}
-    >
-      {/* Logo */}
-      <div className="flex items-center justify-center shrink-0" style={{ height: 64 }}>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            background: "var(--accent)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 16,
-          }}
-        >
-          C
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 flex flex-col items-center gap-2 py-4">
-        {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href || pathname?.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`saas-nav-icon ${active ? "active" : ""}`}
-              title={item.label}
-            >
-              <Icon name={item.icon} size={20} />
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Profile at bottom */}
-      <div className="shrink-0 pb-4">
-        <div
-          className="saas-avatar"
-          style={{ background: "var(--accent-purple)", width: 32, height: 32 }}
-        >
-          B
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-/* ── Top Navigation ── */
-function TopNav() {
-  return (
-    <header
-      className="flex items-center justify-between px-8 shrink-0"
-      style={{ height: 64, background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}
-    >
-      {/* Search — centered */}
-      <div className="saas-search flex items-center gap-2 px-3 py-2" style={{ width: 360 }}>
-        <span style={{ color: "var(--text-tertiary)" }}>
-          <Icon name="search" size={16} />
-        </span>
-        <input
-          type="text"
-          placeholder="Search projects, tasks, team..."
-          className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-text-tertiary"
-          style={{ color: "var(--text-primary)" }}
-        />
-      </div>
-
-      {/* Right actions */}
-      <div className="flex items-center gap-3">
-        {/* Notifications */}
-        <button className="saas-nav-icon" style={{ position: "relative" }} title="Notifications">
-          <Icon name="bell" size={20} />
-          <span
-            style={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "var(--accent-rose)",
-              border: "2px solid var(--bg-secondary)",
-            }}
-          />
-        </button>
-
-        {/* Messages */}
-        <button className="saas-nav-icon" title="Messages">
-          <Icon name="message" size={20} />
-        </button>
-
-        {/* Divider */}
-        <div style={{ width: 1, height: 24, background: "var(--border)" }} />
-
-        {/* User profile */}
-        <div className="flex items-center gap-2">
-          <div className="saas-avatar" style={{ background: "var(--accent-purple)" }}>B</div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Benji</span>
-            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Workspace Owner</span>
-          </div>
-        </div>
-
-        {/* New Project button */}
-        <button className="saas-btn-primary flex items-center gap-1.5 px-4 py-2 text-sm">
-          <Icon name="plus" size={16} />
-          New Project
-        </button>
-      </div>
-    </header>
-  );
-}
-
-/* ── Stat Card ── */
+/* ── Stat cards data ── */
 interface Stat {
   id: string;
   label: string;
@@ -610,62 +473,45 @@ export default function DashboardPage() {
   const [date, setDate] = useState("");
 
   useEffect(() => {
-    // Apply SaaS theme
-    document.documentElement.classList.add("saas");
-    document.documentElement.classList.remove("dark");
-    document.documentElement.classList.add("light");
-
     const now = new Date();
     setDate(now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }));
   }, []);
 
   return (
-    <div className="flex h-full" style={{ background: "var(--bg-primary)" }}>
-      <Sidebar />
+    <div className="flex flex-col gap-6 animate-fade-slide-up">
+      {/* Page title */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+            Dashboard
+          </h1>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>{date}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="saas-btn px-4 py-2 text-sm">Export</button>
+          <button className="saas-btn px-4 py-2 text-sm">Filter</button>
+        </div>
+      </div>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-0">
-        <TopNav />
+      {/* Stat cards row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {STATS.map((s) => (
+          <StatCard key={s.id} stat={s} />
+        ))}
+      </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-auto">
-          <div className="mx-auto max-w-7xl px-8 py-6 flex flex-col gap-6">
-            {/* Page title */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                  Dashboard
-                </h1>
-                <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>{date}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="saas-btn px-4 py-2 text-sm">Export</button>
-                <button className="saas-btn px-4 py-2 text-sm">Filter</button>
-              </div>
-            </div>
+      {/* Main grid: timeline (2 cols) + right column (analytics + meetings) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left — timeline + projects */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <WeeklyTimeline />
+          <ProjectStatusPanel />
+        </div>
 
-            {/* Stat cards row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {STATS.map((s) => (
-                <StatCard key={s.id} stat={s} />
-              ))}
-            </div>
-
-            {/* Main grid: timeline (2 cols) + right column (analytics + meetings) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left — timeline + projects */}
-              <div className="lg:col-span-2 flex flex-col gap-6">
-                <WeeklyTimeline />
-                <ProjectStatusPanel />
-              </div>
-
-              {/* Right — analytics + meetings */}
-              <div className="lg:col-span-1 flex flex-col gap-6">
-                <DonutChart />
-                <MeetingsPanel />
-              </div>
-            </div>
-          </div>
+        {/* Right — analytics + meetings */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <DonutChart />
+          <MeetingsPanel />
         </div>
       </div>
     </div>
