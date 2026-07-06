@@ -19,6 +19,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     bell: <path d="M12 3C8.5 3 6 5.5 6 9V12L4 15H20L18 12V9C18 5.5 15.5 3 12 3ZM9 17C9 18.5 10 19.5 12 19.5C14 19.5 15 18.5 15 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
     message: <path d="M4 5H20V15H12L8 19V15H4V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
     plus: <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
+    due: <path d="M12 8V12L14.5 14.5M12 3C7 3 3 7 3 12C3 17 7 21 12 21C17 21 21 17 21 12C21 7 17 3 12 3ZM12 1V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { href: "/projects", label: "Projects", icon: "projects" },
   { href: "/scheduler", label: "Calendar", icon: "calendar" },
   { href: "/tasks", label: "Tasks", icon: "tasks" },
+  { href: "/due-dates", label: "Due Dates", icon: "due" },
   { href: "/team", label: "Team", icon: "team" },
   { href: "/analytics", label: "Analytics", icon: "analytics" },
   { href: "/settings", label: "Settings", icon: "settings" },
