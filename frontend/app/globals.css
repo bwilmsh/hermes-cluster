@@ -326,7 +326,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     inset 3px 3px 6px var(--neo-dark-inset),
     inset -3px -3px 6px var(--neo-light-inset);
 }
-/* Inset icon container (for stat card icons) */
 .neo-icon-inset {
   border-radius: 50%;
   box-shadow:
@@ -367,4 +366,216 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .neo-toggle.active .neo-toggle-knob {
   transform: translateX(20px);
   background: var(--accent-indigo);
+}
+
+/* ── SaaS Dashboard Theme ───────────────────────────────────────
+   Light-mode-only premium SaaS aesthetic.
+   Soft off-white bg, white cards, vibrant orange accent.
+   Apple + Linear + Notion inspired. Very subtle shadows.
+─────────────────────────────────────────────────────────────────── */
+:root.saas {
+  --bg-primary: #F7F8FA;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F0F1F4;
+  --bg-hover: #F0F1F4;
+  --border: #E8E9ED;
+  --border-light: #F0F1F4;
+  --text-primary: #1A1D23;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --accent: #FF6B35;
+  --accent-hover: #E55A2B;
+  --accent-light: #FFF1EC;
+  --accent-purple: #8B5CF6;
+  --accent-yellow: #F59E0B;
+  --accent-green: #22C55E;
+  --accent-blue: #3B82F6;
+  --accent-rose: #F43F5E;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+}
+
+/* SaaS card — white, soft shadow, thin border */
+.saas-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+.saas-card:hover {
+  box-shadow: var(--shadow-md);
+}
+.saas-card-lg {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* SaaS button — rounded, soft */
+.saas-btn {
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+  transition: all var(--motion-fast) var(--ease-out);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.saas-btn:hover {
+  background: var(--bg-hover);
+}
+.saas-btn-primary {
+  border-radius: var(--radius-xs);
+  font-weight: 600;
+  transition: all var(--motion-fast) var(--ease-out);
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+.saas-btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+/* SaaS status pill */
+.saas-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.saas-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* SaaS sidebar nav icon button */
+.saas-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  transition: all var(--motion-fast) var(--ease-out);
+  color: var(--text-tertiary);
+  position: relative;
+}
+.saas-nav-icon:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+.saas-nav-icon.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.saas-nav-icon.active::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+
+/* SaaS search input */
+.saas-search {
+  background: var(--bg-tertiary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  transition: all var(--motion-fast) var(--ease-out);
+}
+.saas-search:focus-within {
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+/* SaaS progress bar */
+.saas-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+.saas-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width var(--motion-slow) var(--ease-out);
+}
+
+/* SaaS avatar group */
+.saas-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* SaaS trend badge */
+.saas-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* SaaS timeline */
+.saas-timeline-day {
+  border-right: 1px solid var(--border);
+  min-height: 120px;
+  position: relative;
+}
+.saas-timeline-day:last-child {
+  border-right: none;
+}
+.saas-timeline-today {
+  background: var(--accent-light);
+}
+.saas-timeline-today-header {
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+}
+.saas-task-block {
+  border-radius: var(--radius-xs);
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  margin: 2px 0;
+  cursor: pointer;
+  transition: all var(--motion-fast) var(--ease-out);
+  border: 1px solid transparent;
+}
+.saas-task-block:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border);
 }
