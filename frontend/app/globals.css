@@ -248,3 +248,123 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   border-radius: 0 2px 2px 0;
   background: var(--accent-teal);
 }
+
+/* ── Neomorphism ─────────────────────────────────────────────────
+   Dual-shadow system: dark shadow bottom-right, light highlight top-left.
+   Outset = cards/buttons (extruded from surface).
+   Inset  = inputs/toggles (pressed into surface).
+   Adapts to light/dark via --neo-light and --neo-dark tokens.
+─────────────────────────────────────────────────────────────────── */
+:root {
+  --neo-light: oklch(1 0 0 / 0.9);
+  --neo-dark: oklch(0.6 0.012 240 / 0.4);
+  --neo-light-inset: oklch(1 0 0 / 0.85);
+  --neo-dark-inset: oklch(0.55 0.012 240 / 0.35);
+}
+:root.light {
+  --neo-light: oklch(1 0 0 / 0.9);
+  --neo-dark: oklch(0.72 0.01 240 / 0.4);
+  --neo-light-inset: oklch(1 0 0 / 0.85);
+  --neo-dark-inset: oklch(0.68 0.01 240 / 0.35);
+}
+
+.neo-surface {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.neo-outset {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  box-shadow:
+    6px 6px 12px var(--neo-dark),
+    -6px -6px 12px var(--neo-light);
+  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+.neo-outset:hover {
+  box-shadow:
+    8px 8px 16px var(--neo-dark),
+    -8px -8px 16px var(--neo-light);
+}
+.neo-outset-sm {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    4px 4px 8px var(--neo-dark),
+    -4px -4px 8px var(--neo-light);
+}
+.neo-inset {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 4px 4px 8px var(--neo-dark-inset),
+    inset -4px -4px 8px var(--neo-light-inset);
+}
+.neo-inset-sm {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    inset 3px 3px 6px var(--neo-dark-inset),
+    inset -3px -3px 6px var(--neo-light-inset);
+}
+.neo-pill {
+  border-radius: 24px;
+  box-shadow:
+    6px 6px 12px var(--neo-dark),
+    -6px -6px 12px var(--neo-light);
+  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+.neo-pill:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    8px 8px 16px var(--neo-dark),
+    -8px -8px 16px var(--neo-light);
+}
+.neo-pill:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 3px 3px 6px var(--neo-dark-inset),
+    inset -3px -3px 6px var(--neo-light-inset);
+}
+/* Inset icon container (for stat card icons) */
+.neo-icon-inset {
+  border-radius: 50%;
+  box-shadow:
+    inset 3px 3px 6px var(--neo-dark-inset),
+    inset -3px -3px 6px var(--neo-light-inset);
+}
+
+/* ── Toggle switch (neomorphic) ── */
+.neo-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  box-shadow:
+    inset 3px 3px 6px var(--neo-dark-inset),
+    inset -3px -3px 6px var(--neo-light-inset);
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+.neo-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  box-shadow:
+    2px 2px 4px var(--neo-dark),
+    -2px -2px 4px var(--neo-light);
+  transition: transform var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out);
+}
+.neo-toggle.active {
+  background: oklch(0.62 0.19 270 / 0.25);
+}
+.neo-toggle.active .neo-toggle-knob {
+  transform: translateX(20px);
+  background: var(--accent-indigo);
+}
