@@ -9,27 +9,32 @@
 ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Color tokens (oklch for harmony) ── */
-  --bg-primary: oklch(0.18 0.012 240);
-  --bg-secondary: oklch(0.21 0.012 240);
-  --bg-tertiary: oklch(0.14 0.012 240);
-  --bg-hover: oklch(0.25 0.012 240);
-  --border: oklch(0.28 0.012 240 / 0.6);
-  --text-primary: oklch(0.95 0.005 240);
-  --text-secondary: oklch(0.68 0.01 240);
-  --text-tertiary: oklch(0.5 0.008 240);
-  --accent-teal: oklch(0.72 0.11 180);
-  --accent-indigo: oklch(0.62 0.19 270);
-  --accent-rose: oklch(0.65 0.2 20);
-  --accent-amber: oklch(0.78 0.16 85);
-  --accent-green: oklch(0.7 0.17 145);
-  --glass-bg: oklch(1 0 / 0.04);
-  --glass-border: oklch(1 0 / 0.08);
-  --glow-teal: oklch(0.72 0.11 180 / 0.12);
-  --glow-indigo: oklch(0.62 0.19 270 / 0.12);
-  --dot-grid: oklch(1 0 / 0.04);
-  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.08), 0 1px 2px oklch(0 0 0 / 0.06);
-  --shadow-elevated: 0 10px 30px oklch(0 0 0 / 0.15), 0 4px 12px oklch(0 0 0 / 0.08);
+  /* ── Color tokens — blue palette from logo ── */
+  --bg-primary: #0B1020;
+  --bg-secondary: #121833;
+  --bg-tertiary: #080C1A;
+  --bg-hover: #1A2140;
+  --border: #2A3360;
+  --border-light: #1E2645;
+  --text-primary: #9EABFC;
+  --text-secondary: #6F87FC;
+  --text-tertiary: #4866FD;
+  --accent-teal: #486AFE;
+  --accent-indigo: #4866FD;
+  --accent-rose: #486AFE;
+  --accent-amber: #9EABFC;
+  --accent-green: #6F87FC;
+  --accent-purple: #486AFE;
+  --accent-yellow: #C9CDFC;
+  --accent-blue: #4866FD;
+  --glass-bg: rgba(72, 106, 254, 0.06);
+  --glass-border: rgba(72, 106, 254, 0.15);
+  --glow-teal: rgba(72, 106, 254, 0.20);
+  --glow-indigo: rgba(72, 102, 254, 0.20);
+  --glow-purple: rgba(72, 106, 254, 0.15);
+  --dot-grid: rgba(156, 171, 252, 0.06);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 10px 30px rgba(72, 106, 254, 0.12), 0 4px 12px rgba(0, 0, 0, 0.10);
   --radius: 0.625rem;
   --radius-sm: 0.375rem;
   --radius-lg: 1rem;
@@ -42,21 +47,28 @@
 }
 
 :root.light {
-  --bg-primary: oklch(0.99 0.002 240);
-  --bg-secondary: oklch(0.96 0.004 240);
-  --bg-tertiary: oklch(1 0 0);
-  --bg-hover: oklch(0.92 0.004 240);
-  --border: oklch(0.85 0.004 240 / 0.8);
-  --text-primary: oklch(0.2 0.01 240);
-  --text-secondary: oklch(0.45 0.01 240);
-  --text-tertiary: oklch(0.6 0.008 240);
-  --glass-bg: oklch(0.96 0.004 240 / 0.7);
-  --glass-border: oklch(0 0 / 0.08);
-  --glow-teal: oklch(0.72 0.11 180 / 0.18);
-  --glow-indigo: oklch(0.62 0.19 270 / 0.18);
-  --dot-grid: oklch(0 0 / 0.04);
-  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.03);
-  --shadow-elevated: 0 10px 30px oklch(0 0 0 / 0.08), 0 4px 12px oklch(0 0 0 / 0.04);
+  --bg-primary: #F7F8FC;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F0F1FA;
+  --bg-tertiary: #F0F1FA;
+  --bg-hover: #F0F1FA;
+  --border: #E8EAF5;
+  --border-light: #F0F1FA;
+  --text-primary: #1A1D33;
+  --text-secondary: #4A5578;
+  --text-tertiary: #8A94B8;
+  --accent-teal: #486AFE;
+  --accent-indigo: #4866FD;
+  --accent-rose: #486AFE;
+  --accent-amber: #6F87FC;
+  --accent-green: #6F87FC;
+  --glass-bg: rgba(72, 106, 254, 0.05);
+  --glass-border: rgba(72, 106, 254, 0.12);
+  --glow-teal: rgba(72, 106, 254, 0.15);
+  --glow-indigo: rgba(72, 102, 253, 0.15);
+  --dot-grid: rgba(72, 106, 254, 0.04);
+  --shadow-card: 0 1px 3px rgba(72, 106, 254, 0.06), 0 1px 2px rgba(72, 106, 254, 0.04);
+  --shadow-elevated: 0 10px 30px rgba(72, 106, 254, 0.10), 0 4px 12px rgba(72, 106, 254, 0.05);
 }
 
 @theme inline {
@@ -256,16 +268,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
    Adapts to light/dark via --neo-light and --neo-dark tokens.
 ─────────────────────────────────────────────────────────────────── */
 :root {
-  --neo-light: oklch(1 0 0 / 0.9);
-  --neo-dark: oklch(0.6 0.012 240 / 0.4);
-  --neo-light-inset: oklch(1 0 0 / 0.85);
-  --neo-dark-inset: oklch(0.55 0.012 240 / 0.35);
+  --neo-light: rgba(120, 145, 255, 0.08);
+  --neo-dark: rgba(8, 12, 26, 0.5);
+  --neo-light-inset: rgba(120, 145, 255, 0.06);
+  --neo-dark-inset: rgba(8, 12, 26, 0.45);
 }
 :root.light {
-  --neo-light: oklch(1 0 0 / 0.9);
-  --neo-dark: oklch(0.72 0.01 240 / 0.4);
-  --neo-light-inset: oklch(1 0 0 / 0.85);
-  --neo-dark-inset: oklch(0.68 0.01 240 / 0.35);
+  --neo-light: rgba(255, 255, 255, 0.9);
+  --neo-dark: rgba(140, 160, 220, 0.35);
+  --neo-light-inset: rgba(255, 255, 255, 0.85);
+  --neo-dark-inset: rgba(140, 160, 220, 0.30);
 }
 
 .neo-surface {
@@ -374,31 +386,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
    Apple + Linear + Notion inspired. Very subtle shadows.
 ─────────────────────────────────────────────────────────────────── */
 :root.saas {
-  --bg-primary: #F7F8FA;
+  --bg-primary: #F7F8FC;
   --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F0F1F4;
-  --bg-hover: #F0F1F4;
-  --border: #E8E9ED;
-  --border-light: #F0F1F4;
-  --text-primary: #1A1D23;
-  --text-secondary: #6B7280;
-  --text-tertiary: #9CA3AF;
-  --accent: #FF6B35;
-  --accent-hover: #E55A2B;
-  --accent-light: #FFF1EC;
-  --accent-purple: #8B5CF6;
-  --accent-yellow: #F59E0B;
-  --accent-green: #22C55E;
-  --accent-blue: #3B82F6;
-  --accent-rose: #F43F5E;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-  --radius: 16px;
-  --radius-sm: 12px;
-  --radius-xs: 8px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
+  --bg-tertiary: #F0F1FA;
+  --bg-hover: #F0F1FA;
+  --border: #E8EAF5;
+  --border-light: #F0F1FA;
+  --text-primary: #1A1D33;
+  --text-secondary: #4A5578;
+  --text-tertiary: #8A94B8;
+  --accent: #486AFE;
+  --accent-hover: #4866FD;
+  --accent-light: #EEF1FF;
+  --accent-purple: #486AFE;
+  --accent-yellow: #C9CDFC;
+  --accent-green: #6F87FC;
+  --accent-blue: #4866FD;
+  --accent-rose: #486AFE;
 }
 
 /* SaaS card — white, soft shadow, thin border */

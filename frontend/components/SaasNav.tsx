@@ -20,6 +20,8 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     message: <path d="M4 5H20V15H12L8 19V15H4V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
     plus: <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
     due: <path d="M12 8V12L14.5 14.5M12 3C7 3 3 7 3 12C3 17 7 21 12 21C17 21 21 17 21 12C21 7 17 3 12 3ZM12 1V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
+    sun: <path d="M12 3V5M12 19V21M5.6 5.6L7 7M17 17L18.4 18.4M3 12H5M19 12H21M5.6 18.4L7 17M17 7L18.4 5.6M12 8C14.2 8 16 9.8 16 12C16 14.2 14.2 16 12 16C9.8 16 8 14.2 8 12C8 9.8 9.8 8 12 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
+    moon: <path d="M21 12.8C20.5 17.3 16.7 21 12 21C7 21 3 17 3 12C3 7.3 6.7 3.5 11.2 3C9.3 5.4 8.2 8.5 8.2 12C8.2 15.5 9.3 18.6 11.2 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,6 +41,47 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: "settings" },
   { href: "/help", label: "Help", icon: "help" },
 ];
+
+function ThemeToggle() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const dark = stored === "dark";
+    setIsDark(dark);
+    if (dark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  const toggle = () => {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  };
+
+  return (
+    <button
+      className="saas-nav-icon"
+      onClick={toggle}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      <Icon name={isDark ? "sun" : "moon"} size={20} />
+    </button>
+  );
+}
 
 export function SaasSidebar() {
   const pathname = usePathname();
@@ -136,6 +179,9 @@ export function SaasTopNav() {
         <button className="saas-nav-icon" title="Messages">
           <Icon name="message" size={20} />
         </button>
+
+        {/* Theme toggle */}
+        <ThemeToggle />
 
         {/* Divider */}
         <div style={{ width: 1, height: 24, background: "var(--border)" }} />

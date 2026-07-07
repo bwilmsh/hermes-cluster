@@ -5,10 +5,17 @@ import { SaasSidebar, SaasTopNav } from "@/components/SaasNav";
 
 export default function SaasLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Apply SaaS light theme globally
-    document.documentElement.classList.add("saas");
-    document.documentElement.classList.remove("dark");
-    document.documentElement.classList.add("light");
+    // Theme is controlled by ThemeToggle in the top nav.
+    // Default to light mode if no preference stored.
+    const stored = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
+    const isDark = stored === "dark";
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    }
   }, []);
 
   return (
