@@ -92,22 +92,22 @@ export function SaasSidebar() {
     >
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center justify-center shrink-0" style={{ height: 64 }}>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            background: "var(--accent)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 16,
-          }}
-        >
-          C
-        </div>
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="10" fill="url(#logoGrad)" />
+          {/* Stylized cluster/network mark */}
+          <circle cx="20" cy="11" r="3.5" fill="#fff" />
+          <circle cx="11" cy="26" r="3" fill="#fff" fillOpacity="0.85" />
+          <circle cx="29" cy="26" r="3" fill="#fff" fillOpacity="0.85" />
+          <line x1="20" y1="14.5" x2="11" y2="23" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="20" y1="14.5" x2="29" y2="23" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="13.5" y1="26" x2="26.5" y2="26" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.6" />
+          <defs>
+            <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#4866FD" />
+              <stop offset="1" stopColor="#486AFE" />
+            </linearGradient>
+          </defs>
+        </svg>
       </Link>
 
       {/* Nav */}
