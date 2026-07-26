@@ -105,19 +105,26 @@ export function AiChatBar() {
 
   return (
     <div className="ai-chat-root" aria-live="polite">
+      {/* Click-outside backdrop — closes the chat when clicking anywhere else on the page */}
+      {open && (
+        <button
+          type="button"
+          className="ai-chat-backdrop"
+          aria-label="Close chat"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
       {/* Expanded chat panel */}
       {open && (
         <div className="ai-chat-panel">
           <div className="ai-chat-panel-header">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="ai-chat-orb" aria-hidden />
-              <div className="min-w-0">
-                <div className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
-                  Chat with AI
-                </div>
-                <div className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>
-                  Events · tasks · this week
-                </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                Chat with AI
+              </div>
+              <div className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>
+                Events · tasks · this week
               </div>
             </div>
             <button
@@ -190,7 +197,7 @@ export function AiChatBar() {
         </div>
       )}
 
-      {/* Pill bar — always visible on every page */}
+      {/* Pill bar — always visible on every page. Collapsed by default, widens on hover. */}
       <button
         type="button"
         className={`ai-chat-pill ${open ? "open" : ""}`}
@@ -198,11 +205,7 @@ export function AiChatBar() {
         aria-expanded={open}
         aria-label={open ? "Close Chat with AI" : "Chat with AI"}
       >
-        <span className="ai-chat-orb" aria-hidden />
         <span className="ai-chat-pill-label">Chat with AI</span>
-        <span className="ai-chat-pill-hint" aria-hidden>
-          {open ? "Close" : "Ask anything"}
-        </span>
       </button>
     </div>
   );
