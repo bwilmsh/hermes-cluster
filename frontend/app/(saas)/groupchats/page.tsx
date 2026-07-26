@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AskAIInput } from "@/components/AskAIInput";
 
 const MOCK_GROUPS = [
   { id: "1", name: "Planning Team", members: ["Cluster AI", "Booking Agent"] },
@@ -42,13 +43,10 @@ export default function GroupChatsPage() {
 
 function GroupChatView({ group, onBack }: { group: { id: string; name: string; members: string[] }; onBack: () => void }) {
   const [messages, setMessages] = useState<{ sender: string; role: "user" | "assistant"; content: string }[]>([]);
-  const [input, setInput] = useState("");
 
-  const send = () => {
-    if (!input.trim()) return;
-    const userMsg = { sender: "You", role: "user" as const, content: input };
+  const send = (text: string) => {
+    const userMsg = { sender: "You", role: "user" as const, content: text };
     setMessages([...messages, userMsg]);
-    setInput("");
     // Simulate waterfall: each agent responds in sequence
     group.members.forEach((agent, i) => {
       setTimeout(() => {
@@ -68,7 +66,7 @@ function GroupChatView({ group, onBack }: { group: { id: string; name: string; m
         <h2 className="font-medium text-sm">{group.name}</h2>
         <div className="flex -space-x-1.5">
           {group.members.map((m, i) => (
-            <div key={m} className="w-6 h-6 rounded-full flex items-center justify-center text-xs border-2" style={{ background: i === 0 ? "var(--accent-indigo)" : "var(--accent-teal)", borderColor: "var(--bg-secondary)" }}>
+            <div key={m} className="w-6 h-6 rounded-full flex items-center justify-center text-xs border-2" style={{ background: i === 0 ? "var(--accent-indigo)" : "var(--accent-teal)", borderColor: "var(--bg-secondary)" }} >
               {m[0]}
             </div>
           ))}
@@ -87,16 +85,11 @@ function GroupChatView({ group, onBack }: { group: { id: string; name: string; m
           </div>
         ))}
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={`Message ${group.name}... (@ to mention an agent)`}
-          className="flex-1 px-3 py-2.5 rounded-lg text-sm bg-transparent border focus:outline-none"
-          style={{ borderColor: "var(--border)" }}
-        />
-        <button type="submit" className="px-4 py-2.5 rounded-lg text-sm font-medium text-white" style={{ background: "var(--accent-indigo)" }}>Send</button>
-      </form>
+      <AskAIInput
+        collapsedLabel={`Ask ${group.name}`}
+        inputPlaceholder={`Message ${group.name}… (@ to mention an agent)`}
+        onSubmit={send}
+      />
     </div>
   );
 }

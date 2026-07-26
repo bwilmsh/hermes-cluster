@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AskAIInput } from "@/components/AskAIInput";
 
 interface Msg { role: "user" | "assistant"; content: string; }
 
@@ -42,17 +43,15 @@ export default function AgentsPage() {
 function AgentChat({ agentId, onBack }: { agentId: string; onBack: () => void }) {
   const agent = MOCK_AGENTS.find((a) => a.id === agentId)!;
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const send = async () => {
-    if (!input.trim() || streaming) return;
-    const userMsg: Msg = { role: "user", content: input };
+  const send = (text: string) => {
+    if (streaming) return;
+    const userMsg: Msg = { role: "user", content: text };
     setMessages([...messages, userMsg]);
-    setInput("");
     setStreaming(true);
 
     // Simulate streaming response (offline mode)
@@ -60,20 +59,22 @@ function AgentChat({ agentId, onBack }: { agentId: string; onBack: () => void })
     const words = response.split(" ");
     let acc = "";
     for (const word of words) {
-      await new Promise((r) => setTimeout(r, 40));
-      acc += (acc ? " " : "") + word;
-      setMessages((prev) => {
-        const copy = [...prev];
-        const last = copy[copy.length - 1];
-        if (last?.role === "assistant" && !last.content.includes("\n\n[")) {
-          copy[copy.length - 1] = { role: "assistant", content: acc };
-        } else {
-          copy.push({ role: "assistant", content: acc });
-        }
-        return copy;
-      });
+      setTimeout(() => {
+        acc += (acc ? " " : "") + word;
+        setMessages((prev) => {
+          const copy = [...prev];
+          const last = copy[copy.length - 1];
+          if (last?.role === "assistant" && !last.content.includes("\n\n[")) {
+            copy[copy.length - 1] = { role: "assistant", content: acc };
+          } else {
+            copy.push({ role: "assistant", content: acc });
+          }
+          return copy;
+        });
+      }, 0);
     }
-    setStreaming(false);
+    const totalMs = words.length * 40 + 50;
+    setTimeout(() => setStreaming(false), totalMs);
   };
 
   return (
@@ -102,18 +103,12 @@ function AgentChat({ agentId, onBack }: { agentId: string; onBack: () => void })
         ))}
         <div ref={endRef} />
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={`Message ${agent.name}...`}
-          className="flex-1 px-3 py-2.5 rounded-lg text-sm bg-transparent border focus:outline-none"
-          style={{ borderColor: "var(--border)" }}
-        />
-        <button type="submit" disabled={streaming} className="px-4 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-50" style={{ background: "var(--accent-indigo)" }}>
-          {streaming ? "..." : "Send"}
-        </button>
-      </form>
+      <AskAIInput
+        collapsedLabel={`Ask ${agent.name}`}
+        inputPlaceholder={`Message ${agent.name}…`}
+        onSubmit={send}
+        disabled={streaming}
+      />
     </div>
   );
 }
