@@ -474,7 +474,7 @@ function WeekView({
         return (
           <div
             key={iso}
-            className={`sched-day-cell min-h-[220px] glass p-2 ${isToday ? "ring-1" : ""}`}
+            className={`sched-day-cell min-h-[480px] glass p-2 ${isToday ? "ring-1" : ""}`}
             style={isToday ? { boxShadow: "0 0 0 1px var(--glow-indigo), 0 0 20px var(--glow-indigo)" } : {}}
             onDoubleClick={() => onAdd(dayDate)}
             title="Double-click to add event"
