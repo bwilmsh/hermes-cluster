@@ -9,6 +9,24 @@ export default function AnalyticsPage() {
     { label: "Overdue Tasks", value: "7", change: "-3", trend: "up" },
     { label: "Client Satisfaction", value: "4.8/5", change: "+0.2", trend: "up" },
   ];
+
+  const exportReport = () => {
+    const rows = [
+      ["Metric", "Value", "Change"],
+      ...metrics.map((m) => [m.label, m.value, m.change]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `hermes-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="animate-fade-slide-up">
       <div className="flex items-center justify-between mb-6">
@@ -16,7 +34,7 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Analytics</h1>
           <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Performance insights across all projects</p>
         </div>
-        <button className="saas-btn px-4 py-2 text-sm">Export Report</button>
+        <button type="button" className="saas-btn px-4 py-2 text-sm" onClick={exportReport}>Export Report</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {metrics.map((m, i) => (

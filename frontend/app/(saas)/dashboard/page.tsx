@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 /* ── Icons (line-art, 24x24) ── */
 function Icon({ name, size = 20 }: { name: string; size?: number }) {
@@ -35,38 +36,30 @@ interface Stat {
   label: string;
   value: string;
   icon: string;
-  iconBg: string;
   iconColor: string;
   trend: "up" | "down";
   trendValue: string;
   trendLabel: string;
+  href: string;
 }
 
 const STATS: Stat[] = [
-  { id: "projects", label: "Active Projects", value: "12", icon: "projects", iconBg: "#FFF1EC", iconColor: "#FF6B35", trend: "up", trendValue: "+2", trendLabel: "this week" },
-  { id: "tasks", label: "Completed Tasks", value: "248", icon: "tasks", iconBg: "#E8F5E9", iconColor: "#22C55E", trend: "up", trendValue: "+18%", trendLabel: "this month" },
-  { id: "deadlines", label: "Upcoming Deadlines", value: "7", icon: "calendar", iconBg: "#FFF8E1", iconColor: "#F59E0B", trend: "down", trendValue: "-3", trendLabel: "vs last week" },
-  { id: "team", label: "Team Performance", value: "94%", icon: "analytics", iconBg: "#E3F2FD", iconColor: "#3B82F6", trend: "up", trendValue: "+5%", trendLabel: "this sprint" },
+  { id: "projects", label: "Active Projects", value: "12", icon: "projects", iconColor: "#FF6B35", trend: "up", trendValue: "+2", trendLabel: "this week", href: "/projects" },
+  { id: "tasks", label: "Completed Tasks", value: "248", icon: "tasks", iconColor: "#22C55E", trend: "up", trendValue: "+18%", trendLabel: "this month", href: "/tasks" },
+  { id: "deadlines", label: "Upcoming Deadlines", value: "7", icon: "calendar", iconColor: "#F59E0B", trend: "down", trendValue: "-3", trendLabel: "vs last week", href: "/due-dates" },
+  { id: "team", label: "Team Performance", value: "94%", icon: "analytics", iconColor: "#3B82F6", trend: "up", trendValue: "+5%", trendLabel: "this sprint", href: "/analytics" },
 ];
 
 function StatCard({ stat }: { stat: Stat }) {
   return (
-    <div className="saas-card p-5 flex flex-col gap-3">
+    <Link href={stat.href} className="dash-neo-card p-5 flex flex-col gap-3 cursor-pointer transition-transform hover:-translate-y-0.5" style={{ textDecoration: "none", color: "inherit" }}>
       <div className="flex items-center justify-between">
-        <div
-          className="flex items-center justify-center"
-          style={{ width: 36, height: 36, borderRadius: 10, background: stat.iconBg }}
-        >
-          <span style={{ color: stat.iconColor }}>
-            <Icon name={stat.icon} size={18} />
-          </span>
+        <div className="dash-neo-icon" style={{ color: stat.iconColor }}>
+          <Icon name={stat.icon} size={18} />
         </div>
         <span
-          className="saas-trend"
-          style={{
-            background: stat.trend === "up" ? "#E8F5E9" : "#FFEBEE",
-            color: stat.trend === "up" ? "#22C55E" : "#F43F5E",
-          }}
+          className="dash-neo-trend"
+          style={{ color: stat.trend === "up" ? "#22C55E" : "#F43F5E" }}
         >
           {stat.trend === "up" ? "↑" : "↓"} {stat.trendValue}
         </span>
@@ -76,75 +69,161 @@ function StatCard({ stat }: { stat: Stat }) {
         <div className="text-2xl font-bold tnum" style={{ color: "var(--text-primary)" }}>{stat.value}</div>
       </div>
       <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{stat.trendLabel}</div>
-    </div>
+    </Link>
   );
 }
 
 /* ── Donut Chart ── */
+type AnalyticsPeriod = "This Week" | "This Month" | "This Quarter";
+
+const PERIOD_DATA: Record<AnalyticsPeriod, { segments: { label: string; value: number; color: string }[]; completion: number }> = {
+  "This Week": {
+    segments: [
+      { label: "Completed", value: 48, color: "#22C55E" },
+      { label: "In Progress", value: 30, color: "#FF6B35" },
+      { label: "Pending", value: 15, color: "#F59E0B" },
+      { label: "Blocked", value: 7, color: "#F43F5E" },
+    ],
+    completion: 48,
+  },
+  "This Month": {
+    segments: [
+      { label: "Completed", value: 65, color: "#22C55E" },
+      { label: "In Progress", value: 20, color: "#FF6B35" },
+      { label: "Pending", value: 10, color: "#F59E0B" },
+      { label: "Blocked", value: 5, color: "#F43F5E" },
+    ],
+    completion: 65,
+  },
+  "This Quarter": {
+    segments: [
+      { label: "Completed", value: 72, color: "#22C55E" },
+      { label: "In Progress", value: 15, color: "#FF6B35" },
+      { label: "Pending", value: 8, color: "#F59E0B" },
+      { label: "Blocked", value: 5, color: "#F43F5E" },
+    ],
+    completion: 72,
+  },
+};
+
 function DonutChart() {
-  const segments = [
-    { label: "Completed", value: 65, color: "#22C55E" },
-    { label: "In Progress", value: 20, color: "#FF6B35" },
-    { label: "Pending", value: 10, color: "#F59E0B" },
-    { label: "Blocked", value: 5, color: "#F43F5E" },
-  ];
+  const [period, setPeriod] = useState<AnalyticsPeriod>("This Month");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { segments, completion } = PERIOD_DATA[period];
   const total = segments.reduce((s, x) => s + x.value, 0);
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
 
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
   return (
-    <div className="saas-card-lg p-6 flex flex-col gap-4">
+    <div className="dash-neo-card-lg p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Analytics Overview</h3>
-        <button className="saas-btn px-3 py-1 text-xs">This Month</button>
+        <Link href="/analytics" className="text-base font-semibold hover:opacity-80" style={{ color: "var(--text-primary)", textDecoration: "none" }}>
+          Analytics Overview
+        </Link>
+        <div className="relative" ref={ref}>
+          <button
+            type="button"
+            className="dash-neo-btn px-3 py-1.5 text-xs"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+          >
+            {period} ▾
+          </button>
+          {open && (
+            <div
+              className="absolute right-0 mt-1 z-20 min-w-[140px] py-1 rounded-lg shadow-lg"
+              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+            >
+              {(Object.keys(PERIOD_DATA) as AnalyticsPeriod[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className="block w-full text-left px-3 py-2 text-xs hover:opacity-80"
+                  style={{
+                    color: p === period ? "var(--accent, #486AFE)" : "var(--text-primary)",
+                    background: p === period ? "color-mix(in srgb, var(--accent, #486AFE) 10%, transparent)" : "transparent",
+                    fontWeight: p === period ? 600 : 400,
+                  }}
+                  onClick={() => {
+                    setPeriod(p);
+                    setOpen(false);
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+              <div style={{ borderTop: "1px solid var(--border)", margin: "4px 0" }} />
+              <Link
+                href="/analytics"
+                className="block w-full text-left px-3 py-2 text-xs"
+                style={{ color: "var(--text-secondary)", textDecoration: "none" }}
+                onClick={() => setOpen(false)}
+              >
+                Full analytics →
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-6">
-        {/* SVG Donut */}
-        <div style={{ position: "relative", width: 160, height: 160 }}>
-          <svg width="160" height="160" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r={radius} fill="none" stroke="var(--bg-tertiary)" strokeWidth="16" />
-            {segments.map((seg, i) => {
-              const len = (seg.value / total) * circumference;
-              const circle = (
-                <circle
-                  key={i}
-                  cx="80"
-                  cy="80"
-                  r={radius}
-                  fill="none"
-                  stroke={seg.color}
-                  strokeWidth="16"
-                  strokeDasharray={`${len} ${circumference - len}`}
-                  strokeDashoffset={-offset}
-                  strokeLinecap="round"
-                  transform="rotate(-90 80 80)"
-                  style={{ transition: "stroke-dashoffset 0.5s ease" }}
-                />
-              );
-              offset += len;
-              return circle;
-            })}
-          </svg>
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              textAlign: "center",
-            }}
-          >
-            <div className="text-2xl font-bold tnum" style={{ color: "var(--text-primary)" }}>65%</div>
-            <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Completion</div>
+        <div className="dash-neo-inset flex items-center justify-center" style={{ width: 168, height: 168, borderRadius: "50%", flexShrink: 0 }}>
+          <div style={{ position: "relative", width: 140, height: 140 }}>
+            <svg width="140" height="140" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r={radius} fill="none" stroke="color-mix(in srgb, var(--neo-dark) 35%, transparent)" strokeWidth="16" />
+              {segments.map((seg, i) => {
+                const len = (seg.value / total) * circumference;
+                const circle = (
+                  <circle
+                    key={i}
+                    cx="80"
+                    cy="80"
+                    r={radius}
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth="16"
+                    strokeDasharray={`${len} ${circumference - len}`}
+                    strokeDashoffset={-offset}
+                    strokeLinecap="round"
+                    transform="rotate(-90 80 80)"
+                    style={{ transition: "stroke-dashoffset 0.5s ease" }}
+                  />
+                );
+                offset += len;
+                return circle;
+              })}
+            </svg>
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                textAlign: "center",
+              }}
+            >
+              <div className="text-2xl font-bold tnum" style={{ color: "var(--text-primary)" }}>{completion}%</div>
+              <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Completion</div>
+            </div>
           </div>
         </div>
-        {/* Legend */}
-        <div className="flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-2.5 flex-1">
           {segments.map((seg, i) => (
             <div key={i} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: seg.color }} />
+                <span
+                  className="dash-neo-icon"
+                  style={{ width: 12, height: 12, borderRadius: 4, background: seg.color, boxShadow: "2px 2px 4px var(--neo-dark), -2px -2px 4px var(--neo-light)" }}
+                />
                 <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{seg.label}</span>
               </div>
               <span className="text-sm font-semibold tnum" style={{ color: "var(--text-primary)" }}>{seg.value}%</span>
@@ -163,58 +242,69 @@ interface Project {
   subtitle: string;
   status: "On Track" | "At Risk" | "Delayed" | "Completed";
   statusColor: string;
-  statusBg: string;
   progress: number;
   avatar: string;
   avatarColor: string;
 }
 
 const PROJECTS: Project[] = [
-  { id: "p1", title: "Mobile App Redesign", subtitle: "8 tasks · 3 members", status: "On Track", statusColor: "#22C55E", statusBg: "#E8F5E9", progress: 72, avatar: "JD", avatarColor: "#FF6B35" },
-  { id: "p2", title: "API Migration", subtitle: "12 tasks · 4 members", status: "At Risk", statusColor: "#F59E0B", statusBg: "#FFF8E1", progress: 45, avatar: "MK", avatarColor: "#8B5CF6" },
-  { id: "p3", title: "Marketing Website", subtitle: "5 tasks · 2 members", status: "On Track", statusColor: "#22C55E", statusBg: "#E8F5E9", progress: 88, avatar: "AS", avatarColor: "#3B82F6" },
-  { id: "p4", title: "Q3 Roadmap Planning", subtitle: "3 tasks · 6 members", status: "Delayed", statusColor: "#F43F5E", statusBg: "#FFEBEE", progress: 30, avatar: "RB", avatarColor: "#22C55E" },
-  { id: "p5", title: "Customer Onboarding", subtitle: "7 tasks · 3 members", status: "Completed", statusColor: "#3B82F6", statusBg: "#E3F2FD", progress: 100, avatar: "TL", avatarColor: "#F59E0B" },
+  { id: "p1", title: "Mobile App Redesign", subtitle: "8 tasks · 3 members", status: "On Track", statusColor: "#22C55E", progress: 72, avatar: "JD", avatarColor: "#FF6B35" },
+  { id: "p2", title: "API Migration", subtitle: "12 tasks · 4 members", status: "At Risk", statusColor: "#F59E0B", progress: 45, avatar: "MK", avatarColor: "#8B5CF6" },
+  { id: "p3", title: "Marketing Website", subtitle: "5 tasks · 2 members", status: "On Track", statusColor: "#22C55E", progress: 88, avatar: "AS", avatarColor: "#3B82F6" },
+  { id: "p4", title: "Q3 Roadmap Planning", subtitle: "3 tasks · 6 members", status: "Delayed", statusColor: "#F43F5E", progress: 30, avatar: "RB", avatarColor: "#22C55E" },
+  { id: "p5", title: "Customer Onboarding", subtitle: "7 tasks · 3 members", status: "Completed", statusColor: "#3B82F6", progress: 100, avatar: "TL", avatarColor: "#F59E0B" },
 ];
 
-function ProjectStatusPanel() {
+type StatusFilter = "All" | Project["status"];
+
+function ProjectStatusPanel({ statusFilter }: { statusFilter: StatusFilter }) {
+  const filtered = statusFilter === "All" ? PROJECTS : PROJECTS.filter((p) => p.status === statusFilter);
+
   return (
-    <div className="saas-card-lg p-6 flex flex-col gap-4">
+    <div className="dash-neo-card-lg p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Project Status</h3>
-        <button className="saas-btn px-3 py-1 text-xs">View All</button>
+        <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+          Project Status
+          {statusFilter !== "All" && (
+            <span className="text-xs font-normal ml-2" style={{ color: "var(--text-tertiary)" }}>
+              · {statusFilter}
+            </span>
+          )}
+        </h3>
+        <Link href="/projects" className="dash-neo-btn px-3 py-1.5 text-xs" style={{ textDecoration: "none", color: "inherit" }}>
+          View All
+        </Link>
       </div>
       <div className="flex flex-col gap-1">
-        {PROJECTS.map((p) => (
-          <div
+        {filtered.length === 0 && (
+          <div className="text-sm py-6 text-center" style={{ color: "var(--text-tertiary)" }}>
+            No projects match this filter.
+          </div>
+        )}
+        {filtered.map((p) => (
+          <Link
             key={p.id}
-            className="flex items-center gap-3 px-2 py-3 rounded-lg hover:bg-bg-hover transition-colors"
-            style={{ borderRadius: "var(--radius-xs)" }}
+            href="/projects"
+            className="dash-neo-row flex items-center gap-3 px-3 py-3"
+            style={{ textDecoration: "none", color: "inherit" }}
           >
-            {/* Avatar */}
-            <div className="saas-avatar" style={{ background: p.avatarColor }}>{p.avatar}</div>
-            {/* Title + subtitle */}
+            <div className="dash-neo-avatar" style={{ background: p.avatarColor }}>{p.avatar}</div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{p.title}</div>
               <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{p.subtitle}</div>
             </div>
-            {/* Status pill */}
-            <span
-              className="saas-pill"
-              style={{ color: p.statusColor, background: p.statusBg }}
-            >
+            <span className="dash-neo-pill" style={{ color: p.statusColor }}>
               {p.status}
             </span>
-            {/* Progress */}
             <div style={{ width: 80 }}>
-              <div className="saas-progress">
+              <div className="dash-neo-progress">
                 <div
-                  className="saas-progress-fill"
+                  className="dash-neo-progress-fill"
                   style={{ width: `${p.progress}%`, background: p.statusColor }}
                 />
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
@@ -289,66 +379,82 @@ function WeeklyTimeline() {
   const goToThisWeek = () => setWeekRef(new Date());
 
   return (
-    <div className="saas-card-lg p-6 flex flex-col gap-4">
-      {/* Header with week nav */}
+    <div className="dash-neo-card-lg p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Weekly Timeline</h3>
+          <Link href="/scheduler" className="text-base font-semibold hover:opacity-80" style={{ color: "var(--text-primary)", textDecoration: "none" }}>
+            Weekly Timeline
+          </Link>
           <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{weekLabel}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={goToPrevWeek} className="saas-btn px-2 py-1 text-xs">←</button>
-          <button onClick={goToThisWeek} className="saas-btn px-3 py-1 text-xs">Today</button>
-          <button onClick={goToNextWeek} className="saas-btn px-2 py-1 text-xs">→</button>
+          <button type="button" onClick={goToPrevWeek} className="dash-neo-btn px-2.5 py-1.5 text-xs" aria-label="Previous week">←</button>
+          <button type="button" onClick={goToThisWeek} className="dash-neo-btn px-3 py-1.5 text-xs">Today</button>
+          <button type="button" onClick={goToNextWeek} className="dash-neo-btn px-2.5 py-1.5 text-xs" aria-label="Next week">→</button>
+          <Link href="/scheduler" className="dash-neo-btn px-3 py-1.5 text-xs" style={{ textDecoration: "none", color: "inherit" }}>
+            Calendar
+          </Link>
         </div>
       </div>
 
-      {/* Timeline grid */}
-      <div className="grid grid-cols-7" style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-xs)", overflow: "hidden" }}>
-        {/* Day headers */}
+      <div className="dash-neo-timeline grid grid-cols-7">
         {days.map((day, i) => {
           const isToday = i === todayIdx;
           return (
             <div
-              key={i}
-              className={`flex flex-col items-center py-3 ${isToday ? "saas-timeline-today-header" : ""}`}
+              key={`h-${i}`}
+              className="dash-neo-timeline-cell flex flex-col items-center py-3"
               style={{
-                borderRight: i < 6 ? "1px solid var(--border)" : "none",
-                background: isToday ? "var(--accent-light)" : "var(--bg-secondary)",
-                borderBottom: "1px solid var(--border)",
+                background: isToday ? "color-mix(in srgb, var(--accent, #486AFE) 10%, transparent)" : "transparent",
               }}
             >
-              <span className="text-xs font-medium" style={{ color: isToday ? "var(--accent)" : "var(--text-tertiary)" }}>
+              <span className="text-xs font-medium" style={{ color: isToday ? "var(--accent, #486AFE)" : "var(--text-tertiary)" }}>
                 {dayNames[i]}
               </span>
-              <span className="text-lg font-bold tnum" style={{ color: isToday ? "var(--accent)" : "var(--text-primary)" }}>
+              <span
+                className={isToday ? "dash-neo-icon tnum text-lg font-bold" : "text-lg font-bold tnum"}
+                style={{
+                  color: isToday ? "var(--accent, #486AFE)" : "var(--text-primary)",
+                  width: isToday ? 36 : undefined,
+                  height: isToday ? 36 : undefined,
+                  marginTop: isToday ? 4 : 0,
+                }}
+              >
                 {day.getDate()}
               </span>
             </div>
           );
         })}
-        {/* Task blocks */}
-        {days.map((day, i) => {
+        {days.map((_, i) => {
           const isToday = i === todayIdx;
           const dayTasks = TIMELINE_TASKS.filter((t) => t.day === i);
           return (
             <div
-              key={i}
-              className={`saas-timeline-day ${isToday ? "saas-timeline-today" : ""}`}
-              style={{ padding: "8px 6px", background: isToday ? "var(--accent-light)" : "var(--bg-secondary)" }}
+              key={`d-${i}`}
+              className="dash-neo-timeline-cell"
+              style={{
+                padding: "8px 6px",
+                background: isToday ? "color-mix(in srgb, var(--accent, #486AFE) 8%, transparent)" : "transparent",
+              }}
             >
               {dayTasks.map((task) => (
-                <div
+                <Link
                   key={task.id}
-                  className="saas-task-block"
-                  style={{ background: task.bg, color: task.color, borderLeft: `3px solid ${task.color}` }}
+                  href="/scheduler"
+                  className="dash-neo-task block"
+                  style={{
+                    background: task.bg,
+                    color: task.color,
+                    borderLeft: `3px solid ${task.color}`,
+                    textDecoration: "none",
+                  }}
                 >
                   <div className="font-medium truncate">{task.title}</div>
                   <div className="flex items-center gap-1 mt-1">
                     {task.members.slice(0, 3).map((m, mi) => (
                       <div
                         key={mi}
-                        className="saas-avatar"
+                        className="dash-neo-avatar"
                         style={{
                           width: 18,
                           height: 18,
@@ -366,7 +472,7 @@ function WeeklyTimeline() {
                       </span>
                     )}
                   </div>
-                </div>
+                </Link>
               ))}
               {dayTasks.length === 0 && (
                 <div className="text-xs text-center py-4" style={{ color: "var(--text-tertiary)" }}>—</div>
@@ -399,26 +505,34 @@ const MEETINGS: Meeting[] = [
 
 function MeetingsPanel() {
   return (
-    <div className="saas-card-lg p-6 flex flex-col gap-4">
+    <div className="dash-neo-card-lg p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Meetings</h3>
-        <button className="saas-btn px-3 py-1 text-xs">Today</button>
+        <Link href="/scheduler" className="dash-neo-btn px-3 py-1.5 text-xs" style={{ textDecoration: "none", color: "inherit" }}>
+          Today
+        </Link>
       </div>
       <div className="flex flex-col gap-3">
         {MEETINGS.map((m) => (
-          <div
+          <Link
             key={m.id}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-hover transition-colors"
-            style={{ background: "var(--bg-tertiary)", borderRadius: "var(--radius-xs)" }}
+            href="/scheduler"
+            className="dash-neo-inset-sm flex items-center gap-3 p-3"
+            style={{ textDecoration: "none", color: "inherit" }}
           >
-            {/* Time */}
             <div className="flex flex-col items-center shrink-0" style={{ width: 56 }}>
               <span className="text-xs font-bold tnum" style={{ color: "var(--text-primary)" }}>{m.time.split(" ")[0]}</span>
               <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{m.time.split(" ")[1]}</span>
             </div>
-            {/* Divider */}
-            <div style={{ width: 1, height: 32, background: "var(--border)" }} />
-            {/* Meeting info */}
+            <div
+              style={{
+                width: 4,
+                height: 32,
+                borderRadius: 4,
+                background: m.platformColor,
+                boxShadow: `2px 2px 4px var(--neo-dark), -1px -1px 2px var(--neo-light)`,
+              }}
+            />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{m.title}</div>
               <div className="flex items-center gap-1 mt-0.5">
@@ -428,12 +542,11 @@ function MeetingsPanel() {
                 <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{m.platform}</span>
               </div>
             </div>
-            {/* Participants */}
             <div className="flex items-center">
               {m.participants.slice(0, 3).map((p, i) => (
                 <div
                   key={i}
-                  className="saas-avatar"
+                  className="dash-neo-avatar"
                   style={{
                     width: 22,
                     height: 22,
@@ -447,13 +560,12 @@ function MeetingsPanel() {
               ))}
               {m.participants.length > 3 && (
                 <div
-                  className="saas-avatar"
+                  className="dash-neo-avatar"
                   style={{
                     width: 22,
                     height: 22,
                     fontSize: 9,
-                    background: "var(--bg-hover)",
-                    color: "var(--text-tertiary)",
+                    background: "var(--text-tertiary)",
                     marginLeft: -6,
                   }}
                 >
@@ -461,24 +573,66 @@ function MeetingsPanel() {
                 </div>
               )}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
   );
 }
 
+/* ── Export / Filter helpers ── */
+function exportDashboard() {
+  const rows = [
+    ["Section", "Name", "Value", "Status"],
+    ...STATS.map((s) => ["Stat", s.label, s.value, s.trendValue]),
+    ...PROJECTS.map((p) => ["Project", p.title, `${p.progress}%`, p.status]),
+    ...MEETINGS.map((m) => ["Meeting", m.title, m.time, m.platform]),
+  ];
+  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `hermes-dashboard-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+const FILTER_OPTIONS: StatusFilter[] = ["All", "On Track", "At Risk", "Delayed", "Completed"];
+
 /* ── Main Dashboard Page ── */
 export default function DashboardPage() {
   const [date, setDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const now = new Date();
     setDate(now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }));
   }, []);
 
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
   return (
-    <div className="flex flex-col gap-6 animate-fade-slide-up">
+    <div
+      className="dash-neo flex flex-col gap-6 animate-fade-slide-up"
+      style={{
+        background: "var(--dash-surface, var(--bg-primary))",
+        margin: "-1.5rem -2rem",
+        padding: "1.5rem 2rem",
+        minHeight: "calc(100% + 3rem)",
+        borderRadius: "0 0 1.5rem 0",
+      }}
+    >
       {/* Page title */}
       <div className="flex items-center justify-between">
         <div>
@@ -488,13 +642,52 @@ export default function DashboardPage() {
           <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>{date}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="saas-btn px-4 py-2 text-sm">Export</button>
-          <button className="saas-btn px-4 py-2 text-sm">Filter</button>
+          <button type="button" className="dash-neo-btn px-4 py-2 text-sm" onClick={exportDashboard}>
+            Export
+          </button>
+          <div className="relative" ref={filterRef}>
+            <button
+              type="button"
+              className="dash-neo-btn px-4 py-2 text-sm"
+              onClick={() => setFilterOpen((v) => !v)}
+              aria-expanded={filterOpen}
+            >
+              Filter{statusFilter !== "All" ? `: ${statusFilter}` : ""}
+            </button>
+            {filterOpen && (
+              <div
+                className="absolute right-0 mt-1 z-20 min-w-[160px] py-1 rounded-lg shadow-lg"
+                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+              >
+                <div className="px-3 py-1.5 text-xs font-medium" style={{ color: "var(--text-tertiary)" }}>
+                  Project status
+                </div>
+                {FILTER_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    className="block w-full text-left px-3 py-2 text-sm hover:opacity-80"
+                    style={{
+                      color: opt === statusFilter ? "var(--accent, #486AFE)" : "var(--text-primary)",
+                      background: opt === statusFilter ? "color-mix(in srgb, var(--accent, #486AFE) 10%, transparent)" : "transparent",
+                      fontWeight: opt === statusFilter ? 600 : 400,
+                    }}
+                    onClick={() => {
+                      setStatusFilter(opt);
+                      setFilterOpen(false);
+                    }}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Stat cards row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {STATS.map((s) => (
           <StatCard key={s.id} stat={s} />
         ))}
@@ -502,13 +695,11 @@ export default function DashboardPage() {
 
       {/* Main grid: timeline (2 cols) + right column (analytics + meetings) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left — timeline + projects */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <WeeklyTimeline />
-          <ProjectStatusPanel />
+          <ProjectStatusPanel statusFilter={statusFilter} />
         </div>
 
-        {/* Right — analytics + meetings */}
         <div className="lg:col-span-1 flex flex-col gap-6">
           <DonutChart />
           <MeetingsPanel />

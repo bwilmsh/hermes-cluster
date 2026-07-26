@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 /* ── Icons (line-art, 24x24) ── */
 function Icon({ name, size = 20 }: { name: string; size?: number }) {
@@ -42,6 +42,41 @@ const NAV_ITEMS = [
   { href: "/help", label: "Help", icon: "help" },
 ];
 
+/** Smart search: route by keyword, otherwise open tasks with query. */
+function resolveSearch(query: string): string {
+  const q = query.trim().toLowerCase();
+  if (!q) return "/dashboard";
+
+  const routes: { keys: string[]; href: string }[] = [
+    { keys: ["project", "projects"], href: "/projects" },
+    { keys: ["task", "tasks", "todo"], href: "/tasks" },
+    { keys: ["calendar", "schedule", "scheduler", "meeting", "meetings"], href: "/scheduler" },
+    { keys: ["due", "deadline", "deadlines"], href: "/due-dates" },
+    { keys: ["team", "member", "people"], href: "/team" },
+    { keys: ["analytic", "analytics", "report", "metrics"], href: "/analytics" },
+    { keys: ["setting", "settings", "profile", "account"], href: "/settings" },
+    { keys: ["help", "support", "faq"], href: "/help" },
+    { keys: ["message", "messages", "chat", "group"], href: "/groupchats" },
+    { keys: ["notif", "notification", "notifications", "alert"], href: "/notifications" },
+    { keys: ["agent", "agents"], href: "/agents" },
+    { keys: ["habit", "habits"], href: "/habits" },
+    { keys: ["goal", "goals"], href: "/goals" },
+    { keys: ["workflow", "workflows"], href: "/workflows" },
+    { keys: ["integration", "integrations"], href: "/integrations" },
+    { keys: ["dashboard", "home", "today"], href: "/dashboard" },
+  ];
+
+  for (const r of routes) {
+    if (r.keys.some((k) => q === k || q.startsWith(k + " ") || q.includes(" " + k))) {
+      return r.href;
+    }
+    if (r.keys.includes(q)) return r.href;
+  }
+
+  // Fallback: search tasks with the query string
+  return `/tasks?q=${encodeURIComponent(query.trim())}`;
+}
+
 function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
@@ -74,6 +109,7 @@ function ThemeToggle() {
 
   return (
     <button
+      type="button"
       className="saas-nav-icon"
       onClick={toggle}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
@@ -94,7 +130,6 @@ export function SaasSidebar() {
       <Link href="/dashboard" className="flex items-center justify-center shrink-0" style={{ height: 64 }}>
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="40" height="40" rx="10" fill="url(#logoGrad)" />
-          {/* Stylized cluster/network mark */}
           <circle cx="20" cy="11" r="3.5" fill="#fff" />
           <circle cx="11" cy="26" r="3" fill="#fff" fillOpacity="0.85" />
           <circle cx="29" cy="26" r="3" fill="#fff" fillOpacity="0.85" />
@@ -127,39 +162,52 @@ export function SaasSidebar() {
         })}
       </nav>
 
-      {/* Profile at bottom */}
+      {/* Profile at bottom → settings */}
       <div className="shrink-0 pb-4">
-        <div className="saas-avatar" style={{ background: "var(--accent-purple)", width: 32, height: 32 }}>
-          B
-        </div>
+        <Link href="/settings" title="Profile & settings" className="block">
+          <div className="saas-avatar" style={{ background: "var(--accent-purple)", width: 32, height: 32 }}>
+            B
+          </div>
+        </Link>
       </div>
     </aside>
   );
 }
 
 export function SaasTopNav() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  const onSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const href = resolveSearch(query);
+    router.push(href);
+  };
+
   return (
     <header
       className="flex items-center justify-between px-8 shrink-0"
       style={{ height: 64, background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}
     >
       {/* Search — centered */}
-      <div className="saas-search flex items-center gap-2 px-3 py-2" style={{ width: 360 }}>
-        <span style={{ color: "var(--text-tertiary)" }}>
+      <form onSubmit={onSearch} className="saas-search flex items-center gap-2 px-3 py-2" style={{ width: 360 }}>
+        <button type="submit" style={{ color: "var(--text-tertiary)", background: "none", border: "none", padding: 0, cursor: "pointer" }} title="Search" aria-label="Search">
           <Icon name="search" size={16} />
-        </span>
+        </button>
         <input
-          type="text"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search projects, tasks, team..."
           className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-text-tertiary"
           style={{ color: "var(--text-primary)" }}
         />
-      </div>
+      </form>
 
       {/* Right actions */}
       <div className="flex items-center gap-3">
         {/* Notifications */}
-        <button className="saas-nav-icon" style={{ position: "relative" }} title="Notifications">
+        <Link href="/notifications" className="saas-nav-icon" style={{ position: "relative" }} title="Notifications">
           <Icon name="bell" size={20} />
           <span
             style={{
@@ -173,12 +221,12 @@ export function SaasTopNav() {
               border: "2px solid var(--bg-secondary)",
             }}
           />
-        </button>
+        </Link>
 
-        {/* Messages */}
-        <button className="saas-nav-icon" title="Messages">
+        {/* Messages → group chats */}
+        <Link href="/groupchats" className="saas-nav-icon" title="Messages">
           <Icon name="message" size={20} />
-        </button>
+        </Link>
 
         {/* Theme toggle */}
         <ThemeToggle />
@@ -186,18 +234,18 @@ export function SaasTopNav() {
         {/* Divider */}
         <div style={{ width: 1, height: 24, background: "var(--border)" }} />
 
-        {/* User profile */}
-        <div className="flex items-center gap-2">
+        {/* User profile → settings */}
+        <Link href="/settings" className="flex items-center gap-2" style={{ textDecoration: "none" }} title="Profile & settings">
           <div className="saas-avatar" style={{ background: "var(--accent-purple)" }}>B</div>
           <div className="flex flex-col">
             <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Benji</span>
             <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Workspace Owner</span>
           </div>
-        </div>
+        </Link>
 
         {/* New Project button */}
         <Link href="/projects">
-          <button className="saas-btn-primary flex items-center gap-1.5 px-4 py-2 text-sm">
+          <button type="button" className="saas-btn-primary flex items-center gap-1.5 px-4 py-2 text-sm">
             <Icon name="plus" size={16} />
             New Project
           </button>

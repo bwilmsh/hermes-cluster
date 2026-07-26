@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { SaasSidebar, SaasTopNav } from "@/components/SaasNav";
+import { AiChatBar } from "@/components/AiChatBar";
 
 export default function SaasLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -24,13 +25,15 @@ export default function SaasLayout({ children }: { children: React.ReactNode }) 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-h-0">
         <SaasTopNav />
-        {/* Scrollable content */}
+        {/* Scrollable content — extra bottom padding so the AI pill never covers content */}
         <div className="flex-1 overflow-auto">
-          <div className="mx-auto max-w-7xl px-8 py-6">
+          <div className="mx-auto max-w-7xl px-8 py-6" style={{ paddingBottom: "6.5rem" }}>
             {children}
           </div>
         </div>
       </div>
+      {/* Global Chat with AI bar — every SaaS page */}
+      <AiChatBar />
     </div>
   );
 }
