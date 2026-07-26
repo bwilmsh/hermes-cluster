@@ -1328,7 +1328,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-chat-orb,
   .ai-chat-panel,
   .ai-chat-typing span {
     animation: none !important;
