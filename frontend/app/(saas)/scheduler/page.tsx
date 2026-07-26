@@ -88,10 +88,6 @@ function seedEvents(): SchedEvent[] {
   ];
 }
 
-const SEED_DAY_NOTES: Record<string, string> = {
-  // ISO-relative notes get filled for the current week on seed
-};
-
 /* ── Add Event Modal ── */
 interface AddEventForm {
   date: string;
@@ -289,11 +285,8 @@ export default function SchedulerPage() {
   const [cursor, setCursor] = useState(() => new Date());
   const [events, setEvents] = useState<SchedEvent[]>(() => seedEvents());
   const [dayNotes, setDayNotes] = useState<Record<string, string>>(() => {
-    // Seed a note for today so the feature is visible immediately
-    const out: Record<string, string> = { ...SEED_DAY_NOTES };
     const todayIso = toISODate(new Date());
-    out[todayIso] = out[todayIso] ?? "Prep for the demo. Review deck slides, send agenda to attendees.";
-    return out;
+    return { [todayIso]: "Prep for the demo. Review deck slides, send agenda to attendees." };
   });
   const [slideDir, setSlideDir] = useState<SlideDir>("none");
   const [modal, setModal] = useState<AddEventForm | null>(null);
@@ -400,7 +393,7 @@ export default function SchedulerPage() {
             {rangeLabel}
           </h2>
           <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-            Click a day to expand its plan · double-click to add an event
+            Click a day to expand · double-click to add an event
           </p>
         </div>
         <div className="flex gap-2">
@@ -462,7 +455,10 @@ export default function SchedulerPage() {
   );
 }
 
-/* ── Week view (click-to-expand day) ── */
+/* ── Week view (click-to-expand day) ──
+   Layout: 7 columns. Click a day → that cell widens (~2x) and the
+   other 6 stay in the same row but shrink. A second row appears below
+   with the day's full plan + notes, so nothing is hidden.              */
 function WeekView({
   cursor,
   events,
@@ -479,36 +475,6 @@ function WeekView({
   const weekStart = startOfWeek(cursor);
   const now = new Date();
   const [expandedIso, setExpandedIso] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const expandedRef = useRef<HTMLDivElement>(null);
-
-  const expandedIndex = useMemo(() => {
-    if (!expandedIso) return -1;
-    return DAYS.findIndex((_, i) => toISODate(addDays(weekStart, i)) === expandedIso);
-  }, [expandedIso, weekStart]);
-
-  // Click outside the expanded cell → collapse
-  useEffect(() => {
-    if (!expandedIso) return;
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (expandedRef.current && !expandedRef.current.contains(target)) {
-        setExpandedIso(null);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [expandedIso]);
-
-  // ESC key collapses
-  useEffect(() => {
-    if (!expandedIso) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setExpandedIso(null);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [expandedIso]);
 
   const days = useMemo(
     () => DAYS.map((label, i) => {
@@ -522,17 +488,17 @@ function WeekView({
     [weekStart, events]
   );
 
-  const expandedDay = expandedIndex >= 0 ? days[expandedIndex] : null;
+  const expandedDay = expandedIso ? days.find((d) => d.iso === expandedIso) ?? null : null;
 
   return (
-    <div className="sched-week-anim" ref={containerRef}>
-      {/* Strip layout: 7 columns. When one is expanded, it gets ~5x the width. */}
+    <div className="sched-week-anim">
+      {/* Row 1: 7 day cells. The expanded one widens (~2x) and the others shrink. */}
       <div
-        className="sched-week-grid"
+        className="sched-week-row"
         style={
-          expandedIndex >= 0
+          expandedIso
             ? {
-                gridTemplateColumns: `repeat(${expandedIndex}, minmax(0, 1fr)) minmax(0, 4fr) repeat(${6 - expandedIndex}, minmax(0, 1fr))`,
+                gridTemplateColumns: `${getColumnWeights(DAYS.indexOf(days.find((d) => d.iso === expandedIso)!.label)).join(" ")}`,
               }
             : { gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }
         }
@@ -540,16 +506,12 @@ function WeekView({
         {days.map((d) => {
           const isToday = d.date.toDateString() === now.toDateString();
           const isExpanded = d.iso === expandedIso;
-
           return (
             <button
               key={d.iso}
               type="button"
               className={`sched-week-cell ${isToday ? "is-today" : ""} ${isExpanded ? "is-expanded" : ""}`}
-              onClick={() => {
-                if (isExpanded) return;
-                setExpandedIso(d.iso);
-              }}
+              onClick={() => setExpandedIso(isExpanded ? null : d.iso)}
               aria-label={`${d.label} ${d.date.getDate()} — ${d.dayEvents.length} event${d.dayEvents.length === 1 ? "" : "s"}`}
               aria-expanded={isExpanded}
               onDoubleClick={(e) => {
@@ -566,7 +528,7 @@ function WeekView({
               </div>
 
               <div className="sched-week-cell-events">
-                {d.dayEvents.map((ev) => (
+                {d.dayEvents.slice(0, isExpanded ? 6 : 4).map((ev) => (
                   <div
                     key={ev.id}
                     className="sched-week-cell-event"
@@ -579,8 +541,11 @@ function WeekView({
                     <div className="sched-week-cell-event-title">{ev.title}</div>
                   </div>
                 ))}
-                {d.dayEvents.length === 0 && !isExpanded && (
+                {d.dayEvents.length === 0 && (
                   <div className="sched-week-cell-empty">No events</div>
+                )}
+                {!isExpanded && d.dayEvents.length > 4 && (
+                  <div className="sched-week-cell-more">+{d.dayEvents.length - 4} more</div>
                 )}
               </div>
             </button>
@@ -588,32 +553,34 @@ function WeekView({
         })}
       </div>
 
-      {/* Expanded overlay panel — floats above the row, only runs when something is expanded */}
-      {expandedDay && (
-        <div
-          className="sched-week-expanded-overlay"
-          ref={expandedRef}
-          role="region"
-          aria-label={`${expandedDay.label} day plan`}
-        >
+      {/* Row 2: only renders when a day is expanded. Sits below the 7 cells,
+          takes the full row width. Shows the day's full plan + notes. */}
+      <div className={`sched-week-row2 ${expandedDay ? "is-open" : ""}`} aria-hidden={!expandedDay}>
+        {expandedDay && (
           <DayPlanPanel
             dayLabel={expandedDay.label}
             date={expandedDay.date}
             events={expandedDay.dayEvents}
             note={dayNotes[expandedDay.iso] || ""}
             onSetNote={(v) => onSetNote(expandedDay.iso, v)}
-            onAddEvent={(time) => {
-              onAdd(expandedDay.date, time);
-            }}
+            onAddEvent={(time) => onAdd(expandedDay.date, time)}
             onClose={() => setExpandedIso(null)}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
 
-/* ── Day plan panel (rendered inside the expanded cell) ── */
+/* Returns grid-template-columns track sizes so the expanded cell is ~2x
+   the width of the others. 7 tracks total. */
+function getColumnWeights(expandedIndex: number): string[] {
+  const SMALL = "minmax(0, 0.6fr)";
+  const BIG = "minmax(0, 2.2fr)";
+  return Array.from({ length: 7 }, (_, i) => (i === expandedIndex ? BIG : SMALL));
+}
+
+/* ── Day plan row (under the 7-cell row, full width) ── */
 function DayPlanPanel({
   dayLabel,
   date,
@@ -631,15 +598,15 @@ function DayPlanPanel({
   onAddEvent: (time: string) => void;
   onClose: () => void;
 }) {
-  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 06:00 – 21:00
   const totalEvents = events.length;
 
   // Suggest the next free hour for the "Add event" button
   const nextFreeHour = useMemo(() => {
+    const hours = Array.from({ length: 16 }, (_, i) => i + 6);
     const occupied = new Set(events.map((e) => parseInt(e.startTime.split(":")[0], 10)));
     for (const h of hours) if (!occupied.has(h)) return String(h).padStart(2, "0") + ":00";
     return "09:00";
-  }, [events, hours]);
+  }, [events]);
 
   return (
     <div className="sched-day-plan">
@@ -670,6 +637,7 @@ function DayPlanPanel({
             onClick={onClose}
             className="sched-day-plan-close"
             aria-label="Collapse day plan"
+            title="Collapse"
           >
             ✕
           </button>
@@ -677,66 +645,45 @@ function DayPlanPanel({
       </div>
 
       <div className="sched-day-plan-body">
-        {/* Timeline */}
-        <div className="sched-day-plan-timeline">
-          <div className="sched-day-plan-timeline-title">
-            Day plan
-          </div>
-          <div className="sched-day-plan-hours">
-            {hours.map((h) => {
-              const label = `${String(h).padStart(2, "0")}:00`;
-              const hourEvents = events.filter((e) => parseInt(e.startTime.split(":")[0], 10) === h);
-              return (
-                <div
-                  key={h}
-                  className="sched-day-plan-hour-row"
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    onAddEvent(label);
-                  }}
-                >
-                  <span className="sched-day-plan-hour-label tnum">{label}</span>
-                  <div className="sched-day-plan-hour-events">
-                    {hourEvents.map((ev) => (
-                      <div
-                        key={ev.id}
-                        className="sched-day-plan-event"
-                        style={{ borderLeftColor: TYPE_COLORS[ev.itemType] }}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="sched-day-plan-event-row">
-                          <span className="sched-day-plan-event-time tnum">
-                            {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ""}
-                          </span>
-                          <span className="sched-day-plan-event-type">{ev.itemType.toLowerCase()}</span>
-                        </div>
-                        <div className="sched-day-plan-event-title">{ev.title}</div>
-                        {ev.notes && (
-                          <div className="sched-day-plan-event-notes">{ev.notes}</div>
-                        )}
-                      </div>
-                    ))}
-                    {hourEvents.length === 0 && (
-                      <div className="sched-day-plan-hour-empty">—</div>
-                    )}
-                  </div>
+        {/* Event cards (compact grid) */}
+        <div className="sched-day-plan-events">
+          {totalEvents === 0 ? (
+            <div className="sched-day-plan-empty">
+              No events for this day. Click <strong>Add event</strong> to schedule one.
+            </div>
+          ) : (
+            events.map((ev) => (
+              <div
+                key={ev.id}
+                className="sched-day-plan-event"
+                style={{ borderLeftColor: TYPE_COLORS[ev.itemType] }}
+              >
+                <div className="sched-day-plan-event-row">
+                  <span className="sched-day-plan-event-time tnum">
+                    {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ""}
+                  </span>
+                  <span className="sched-day-plan-event-type">{ev.itemType.toLowerCase()}</span>
                 </div>
-              );
-            })}
-          </div>
+                <div className="sched-day-plan-event-title">{ev.title}</div>
+                {ev.notes && (
+                  <div className="sched-day-plan-event-notes">{ev.notes}</div>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
         {/* Notes */}
         <div className="sched-day-plan-notes">
           <div className="sched-day-plan-notes-header">
             <div className="sched-day-plan-notes-title">Notes</div>
-            <div className="sched-day-plan-notes-hint">Auto-saves as you type</div>
+            <div className="sched-day-plan-notes-hint">Auto-saves</div>
           </div>
           <textarea
             className="sched-day-plan-notes-area"
             value={note}
             onChange={(e) => onSetNote(e.target.value)}
-            placeholder="What's on your mind for this day? Goals, prep, reminders…"
+            placeholder="Goals, prep, reminders…"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
           />

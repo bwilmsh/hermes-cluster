@@ -937,17 +937,37 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: color-mix(in srgb, var(--bg-hover) 60%, transparent);
 }
 
-/* ── Week view: click-to-expand day cells ── */
+/* ── Week view: subtle click-to-expand day cells ──
+   Row 1: 7 columns, the clicked day widens to ~2x and the others shrink.
+   Row 2: only renders when a day is expanded, shows full day plan.     */
 .sched-week-anim {
-  position: relative;
   width: 100%;
 }
 
-.sched-week-grid {
+.sched-week-row {
   display: grid;
   gap: 6px;
   width: 100%;
-  transition: grid-template-columns 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: grid-template-columns 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sched-week-row2 {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.24s ease,
+              margin-top 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  margin-top: 0;
+  overflow: hidden;
+}
+.sched-week-row2.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 6px;
+}
+.sched-week-row2 > * {
+  min-height: 0;
 }
 
 .sched-week-cell {
@@ -957,16 +977,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 10px 10px 12px;
-  min-height: 480px;
+  min-height: 280px;
   cursor: pointer;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.3s ease,
-    min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   font: inherit;
   color: inherit;
   user-select: none;
@@ -982,15 +1001,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .sched-week-cell.is-expanded {
   background: var(--bg-secondary);
   border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 1px var(--accent-indigo), 0 12px 32px rgba(72, 102, 253, 0.22);
-  cursor: default;
+  box-shadow: 0 0 0 1px var(--accent-indigo), 0 8px 20px rgba(72, 102, 253, 0.20);
 }
 
 .sched-week-cell-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .sched-week-cell-today-bar {
   width: 3px;
@@ -1024,7 +1042,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .sched-week-cell-events {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   flex: 1;
   min-height: 0;
 }
@@ -1032,7 +1050,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: var(--bg-hover);
   border-left: 2px solid var(--accent-indigo);
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 5px 7px;
   font-size: 11px;
   line-height: 1.3;
 }
@@ -1042,7 +1060,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   justify-content: space-between;
   gap: 4px;
   color: var(--text-tertiary);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 .sched-week-cell-event-time {
   font-size: 10px;
@@ -1067,44 +1085,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   color: var(--text-tertiary);
   opacity: 0.6;
   font-style: italic;
-  padding: 4px 0;
+  padding: 2px 0;
+}
+.sched-week-cell-more {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  padding: 2px 0;
 }
 
-/* When one cell is expanded the others shrink — show a hint of the day still */
-.sched-week-cell:not(.is-expanded) {
-  opacity: 0.85;
-}
-.sched-week-cell:not(.is-expanded):hover {
-  opacity: 1;
-}
-
-/* ── Expanded day plan overlay ── */
-.sched-week-expanded-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  pointer-events: none;
-  z-index: 5;
-  animation: schedExpandIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes schedExpandIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
+/* ── Expanded day plan row (full width under the 7-cell row) ── */
 .sched-day-plan {
-  position: relative;
-  width: 100%;
-  pointer-events: auto;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent-indigo);
   border-radius: var(--radius);
-  padding: 16px 18px 18px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 16px 40px rgba(15, 18, 40, 0.20), 0 4px 16px rgba(72, 102, 253, 0.12);
-  min-height: 480px;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(15, 18, 40, 0.18), 0 2px 8px rgba(72, 102, 253, 0.10);
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1115,7 +1115,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   gap: 12px;
 }
 .sched-day-plan-day {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -1128,9 +1128,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   color: var(--text-tertiary);
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1146,62 +1146,29 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .sched-day-plan-body {
   display: grid;
   grid-template-columns: 1fr 280px;
-  gap: 16px;
-  flex: 1;
+  gap: 14px;
   min-height: 0;
 }
 
-.sched-day-plan-timeline {
+.sched-day-plan-events {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-.sched-day-plan-timeline-title {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-tertiary);
-  margin-bottom: 8px;
-}
-.sched-day-plan-hours {
-  flex: 1;
+  gap: 6px;
+  max-height: 260px;
   overflow-y: auto;
-  border: 1px solid var(--border);
+  padding-right: 4px;
+}
+.sched-day-plan-empty {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 20px 12px;
+  border: 1px dashed var(--border);
   border-radius: 8px;
   background: var(--bg-tertiary);
 }
-.sched-day-plan-hour-row {
-  display: flex;
-  gap: 12px;
-  padding: 8px 12px;
-  min-height: 44px;
-  border-bottom: 1px solid var(--border);
-}
-.sched-day-plan-hour-row:last-child { border-bottom: none; }
-.sched-day-plan-hour-label {
-  font-size: 10px;
-  color: var(--text-tertiary);
-  font-weight: 600;
-  width: 40px;
-  flex-shrink: 0;
-  padding-top: 2px;
-}
-.sched-day-plan-hour-events {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.sched-day-plan-hour-empty {
-  color: var(--text-tertiary);
-  opacity: 0.4;
-  font-size: 11px;
-  padding-top: 2px;
-}
 .sched-day-plan-event {
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary);
   border-left: 3px solid var(--accent-indigo);
   border-radius: 6px;
   padding: 6px 10px;
@@ -1234,7 +1201,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .sched-day-plan-event-notes {
   color: var(--text-tertiary);
   font-size: 11px;
-  margin-top: 4px;
+  margin-top: 3px;
   font-style: italic;
   line-height: 1.4;
 }
@@ -1242,17 +1209,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .sched-day-plan-notes {
   display: flex;
   flex-direction: column;
-  min-height: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-tertiary);
   overflow: hidden;
+  min-height: 140px;
 }
 .sched-day-plan-notes-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-secondary);
 }
@@ -1276,10 +1243,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: transparent;
   border: none;
   outline: none;
-  padding: 12px;
+  padding: 10px 12px;
   color: var(--text-primary);
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   font-family: inherit;
 }
@@ -1291,9 +1258,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 @media (max-width: 1100px) {
   .sched-day-plan-body {
     grid-template-columns: 1fr;
-  }
-  .sched-day-plan-notes {
-    min-height: 140px;
   }
 }
 
