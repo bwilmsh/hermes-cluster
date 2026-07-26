@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type ViewMode = "day" | "week" | "month";
@@ -18,9 +18,10 @@ interface SchedEvent {
   priority: "LOW" | "MEDIUM" | "HIGH";
   reminder: boolean;
   tags?: string[];
+  notes?: string;
 }
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const TYPE_COLORS: Record<string, string> = {
   EVENT: "var(--accent-indigo)",
   TASK: "var(--accent-teal)",
@@ -34,11 +35,6 @@ function toISODate(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
-}
-
-function parseISODate(iso: string): Date {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d);
 }
 
 function startOfWeek(date: Date): Date {
@@ -92,6 +88,10 @@ function seedEvents(): SchedEvent[] {
   ];
 }
 
+const SEED_DAY_NOTES: Record<string, string> = {
+  // ISO-relative notes get filled for the current week on seed
+};
+
 /* ── Add Event Modal ── */
 interface AddEventForm {
   date: string;
@@ -124,7 +124,6 @@ function AddEventModal({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    // Lock body scroll while modal is open so overlay covers full page cleanly
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", onKey);
@@ -140,8 +139,6 @@ function AddEventModal({
     onSave({ ...form, title: form.title.trim() });
   };
 
-  // Portal to document.body so the blur covers sidebar, top nav, and full viewport
-  // (fixed positioning inside animated/overflow parents only covers the calendar area)
   if (!mounted) return null;
 
   return createPortal(
@@ -291,8 +288,19 @@ export default function SchedulerPage() {
   const [view, setView] = useState<ViewMode>("week");
   const [cursor, setCursor] = useState(() => new Date());
   const [events, setEvents] = useState<SchedEvent[]>(() => seedEvents());
+  const [dayNotes, setDayNotes] = useState<Record<string, string>>(() => {
+    // Seed a note for today so the feature is visible immediately
+    const out: Record<string, string> = { ...SEED_DAY_NOTES };
+    const todayIso = toISODate(new Date());
+    out[todayIso] = out[todayIso] ?? "Prep for the demo. Review deck slides, send agenda to attendees.";
+    return out;
+  });
   const [slideDir, setSlideDir] = useState<SlideDir>("none");
   const [modal, setModal] = useState<AddEventForm | null>(null);
+
+  const setDayNote = useCallback((iso: string, value: string) => {
+    setDayNotes((prev) => ({ ...prev, [iso]: value }));
+  }, []);
 
   const openAdd = useCallback((date: Date, time = "09:00") => {
     setModal({
@@ -392,7 +400,7 @@ export default function SchedulerPage() {
             {rangeLabel}
           </h2>
           <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-            Double-click a date to add an event
+            Click a day to expand its plan · double-click to add an event
           </p>
         </div>
         <div className="flex gap-2">
@@ -426,7 +434,13 @@ export default function SchedulerPage() {
       <div className="sched-slide-viewport">
         <SlidePane slideKey={slideKey} direction={slideDir}>
           {view === "week" && (
-            <WeekView cursor={cursor} events={events} onAdd={openAdd} />
+            <WeekView
+              cursor={cursor}
+              events={events}
+              dayNotes={dayNotes}
+              onAdd={openAdd}
+              onSetNote={setDayNote}
+            />
           )}
           {view === "day" && (
             <DayView cursor={cursor} events={events} onAdd={openAdd} />
@@ -448,68 +462,286 @@ export default function SchedulerPage() {
   );
 }
 
-/* ── Week view ── */
+/* ── Week view (click-to-expand day) ── */
 function WeekView({
   cursor,
   events,
+  dayNotes,
   onAdd,
+  onSetNote,
 }: {
   cursor: Date;
   events: SchedEvent[];
+  dayNotes: Record<string, string>;
   onAdd: (date: Date, time?: string) => void;
+  onSetNote: (iso: string, value: string) => void;
 }) {
   const weekStart = startOfWeek(cursor);
   const now = new Date();
+  const [expandedIso, setExpandedIso] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const expandedRef = useRef<HTMLDivElement>(null);
+
+  const expandedIndex = useMemo(() => {
+    if (!expandedIso) return -1;
+    return DAYS.findIndex((_, i) => toISODate(addDays(weekStart, i)) === expandedIso);
+  }, [expandedIso, weekStart]);
+
+  // Click outside the expanded cell → collapse
+  useEffect(() => {
+    if (!expandedIso) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (expandedRef.current && !expandedRef.current.contains(target)) {
+        setExpandedIso(null);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [expandedIso]);
+
+  // ESC key collapses
+  useEffect(() => {
+    if (!expandedIso) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpandedIso(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [expandedIso]);
+
+  const days = useMemo(
+    () => DAYS.map((label, i) => {
+      const date = addDays(weekStart, i);
+      const iso = toISODate(date);
+      const dayEvents = events
+        .filter((e) => e.date === iso)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+      return { label, date, iso, dayEvents };
+    }),
+    [weekStart, events]
+  );
+
+  const expandedDay = expandedIndex >= 0 ? days[expandedIndex] : null;
 
   return (
-    <div className="grid grid-cols-7 gap-1">
-      {DAYS.map((day, i) => {
-        const dayDate = addDays(weekStart, i);
-        const iso = toISODate(dayDate);
-        const isToday = dayDate.toDateString() === now.toDateString();
-        const dayEvents = events
-          .filter((e) => e.date === iso)
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    <div className="sched-week-anim" ref={containerRef}>
+      {/* Strip layout: 7 columns. When one is expanded, it gets ~5x the width. */}
+      <div
+        className="sched-week-grid"
+        style={
+          expandedIndex >= 0
+            ? {
+                gridTemplateColumns: `repeat(${expandedIndex}, minmax(0, 1fr)) minmax(0, 4fr) repeat(${6 - expandedIndex}, minmax(0, 1fr))`,
+              }
+            : { gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }
+        }
+      >
+        {days.map((d) => {
+          const isToday = d.date.toDateString() === now.toDateString();
+          const isExpanded = d.iso === expandedIso;
 
-        return (
-          <div
-            key={iso}
-            className={`sched-day-cell min-h-[480px] glass p-2 ${isToday ? "ring-1" : ""}`}
-            style={isToday ? { boxShadow: "0 0 0 1px var(--glow-indigo), 0 0 20px var(--glow-indigo)" } : {}}
-            onDoubleClick={() => onAdd(dayDate)}
-            title="Double-click to add event"
+          return (
+            <button
+              key={d.iso}
+              type="button"
+              className={`sched-week-cell ${isToday ? "is-today" : ""} ${isExpanded ? "is-expanded" : ""}`}
+              onClick={() => {
+                if (isExpanded) return;
+                setExpandedIso(d.iso);
+              }}
+              aria-label={`${d.label} ${d.date.getDate()} — ${d.dayEvents.length} event${d.dayEvents.length === 1 ? "" : "s"}`}
+              aria-expanded={isExpanded}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                onAdd(d.date);
+              }}
+            >
+              <div className="sched-week-cell-header">
+                {isToday && <span className="sched-week-cell-today-bar" aria-hidden />}
+                <span className={`sched-week-cell-day ${isToday ? "is-today" : ""}`}>{d.label}</span>
+                <span className={`sched-week-cell-num ${isToday ? "is-today" : ""}`}>
+                  {d.date.getDate()}
+                </span>
+              </div>
+
+              <div className="sched-week-cell-events">
+                {d.dayEvents.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="sched-week-cell-event"
+                    style={{ borderLeftColor: TYPE_COLORS[ev.itemType] }}
+                  >
+                    <div className="sched-week-cell-event-row">
+                      <span className="sched-week-cell-event-time tnum">{ev.startTime}</span>
+                      {ev.reminder && <span className="sched-week-cell-event-bell" aria-hidden>🔔</span>}
+                    </div>
+                    <div className="sched-week-cell-event-title">{ev.title}</div>
+                  </div>
+                ))}
+                {d.dayEvents.length === 0 && !isExpanded && (
+                  <div className="sched-week-cell-empty">No events</div>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Expanded overlay panel — floats above the row, only runs when something is expanded */}
+      {expandedDay && (
+        <div
+          className="sched-week-expanded-overlay"
+          ref={expandedRef}
+          role="region"
+          aria-label={`${expandedDay.label} day plan`}
+        >
+          <DayPlanPanel
+            dayLabel={expandedDay.label}
+            date={expandedDay.date}
+            events={expandedDay.dayEvents}
+            note={dayNotes[expandedDay.iso] || ""}
+            onSetNote={(v) => onSetNote(expandedDay.iso, v)}
+            onAddEvent={(time) => {
+              onAdd(expandedDay.date, time);
+            }}
+            onClose={() => setExpandedIso(null)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Day plan panel (rendered inside the expanded cell) ── */
+function DayPlanPanel({
+  dayLabel,
+  date,
+  events,
+  note,
+  onSetNote,
+  onAddEvent,
+  onClose,
+}: {
+  dayLabel: string;
+  date: Date;
+  events: SchedEvent[];
+  note: string;
+  onSetNote: (v: string) => void;
+  onAddEvent: (time: string) => void;
+  onClose: () => void;
+}) {
+  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 06:00 – 21:00
+  const totalEvents = events.length;
+
+  // Suggest the next free hour for the "Add event" button
+  const nextFreeHour = useMemo(() => {
+    const occupied = new Set(events.map((e) => parseInt(e.startTime.split(":")[0], 10)));
+    for (const h of hours) if (!occupied.has(h)) return String(h).padStart(2, "0") + ":00";
+    return "09:00";
+  }, [events, hours]);
+
+  return (
+    <div className="sched-day-plan">
+      <div className="sched-day-plan-header">
+        <div>
+          <div className="sched-day-plan-day">
+            {dayLabel} · {date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+          </div>
+          <div className="sched-day-plan-sub">
+            {totalEvents === 0
+              ? "Nothing scheduled"
+              : `${totalEvents} event${totalEvents === 1 ? "" : "s"} scheduled`}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onAddEvent(nextFreeHour)}
+            className="saas-btn-primary px-3 py-1.5 text-sm flex items-center gap-1.5"
           >
-            <div className="flex items-center gap-2 mb-2 pointer-events-none">
-              {isToday && <div style={{ width: 3, height: 16, background: "var(--accent-teal)", borderRadius: 2 }} />}
-              <span className={`text-xs font-medium ${isToday ? "text-text-primary" : "text-text-tertiary"}`}>{day}</span>
-              <span className={`text-xs tnum ${isToday ? "text-text-primary font-semibold" : "text-text-tertiary"}`}>
-                {dayDate.getDate()}
-              </span>
-            </div>
-            <div className="space-y-1">
-              {dayEvents.map((ev) => (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Add event
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="sched-day-plan-close"
+            aria-label="Collapse day plan"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div className="sched-day-plan-body">
+        {/* Timeline */}
+        <div className="sched-day-plan-timeline">
+          <div className="sched-day-plan-timeline-title">
+            Day plan
+          </div>
+          <div className="sched-day-plan-hours">
+            {hours.map((h) => {
+              const label = `${String(h).padStart(2, "0")}:00`;
+              const hourEvents = events.filter((e) => parseInt(e.startTime.split(":")[0], 10) === h);
+              return (
                 <div
-                  key={ev.id}
-                  className="px-2 py-1.5 rounded text-xs"
-                  style={{
-                    background: "var(--bg-hover)",
-                    borderLeft: `2px solid ${TYPE_COLORS[ev.itemType]}`,
+                  key={h}
+                  className="sched-day-plan-hour-row"
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    onAddEvent(label);
                   }}
-                  onDoubleClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="tnum text-text-tertiary">{ev.startTime}</span>
-                    {ev.reminder && (
-                      <span title="Reminder on" style={{ fontSize: 10, color: "var(--accent-amber)" }}>🔔</span>
+                  <span className="sched-day-plan-hour-label tnum">{label}</span>
+                  <div className="sched-day-plan-hour-events">
+                    {hourEvents.map((ev) => (
+                      <div
+                        key={ev.id}
+                        className="sched-day-plan-event"
+                        style={{ borderLeftColor: TYPE_COLORS[ev.itemType] }}
+                        onDoubleClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="sched-day-plan-event-row">
+                          <span className="sched-day-plan-event-time tnum">
+                            {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ""}
+                          </span>
+                          <span className="sched-day-plan-event-type">{ev.itemType.toLowerCase()}</span>
+                        </div>
+                        <div className="sched-day-plan-event-title">{ev.title}</div>
+                        {ev.notes && (
+                          <div className="sched-day-plan-event-notes">{ev.notes}</div>
+                        )}
+                      </div>
+                    ))}
+                    {hourEvents.length === 0 && (
+                      <div className="sched-day-plan-hour-empty">—</div>
                     )}
                   </div>
-                  <div className="font-medium truncate">{ev.title}</div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+
+        {/* Notes */}
+        <div className="sched-day-plan-notes">
+          <div className="sched-day-plan-notes-header">
+            <div className="sched-day-plan-notes-title">Notes</div>
+            <div className="sched-day-plan-notes-hint">Auto-saves as you type</div>
+          </div>
+          <textarea
+            className="sched-day-plan-notes-area"
+            value={note}
+            onChange={(e) => onSetNote(e.target.value)}
+            placeholder="What's on your mind for this day? Goals, prep, reminders…"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
     </div>
   );
 }

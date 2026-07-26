@@ -937,6 +937,366 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: color-mix(in srgb, var(--bg-hover) 60%, transparent);
 }
 
+/* ── Week view: click-to-expand day cells ── */
+.sched-week-anim {
+  position: relative;
+  width: 100%;
+}
+
+.sched-week-grid {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  transition: grid-template-columns 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sched-week-cell {
+  position: relative;
+  text-align: left;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 10px 12px;
+  min-height: 480px;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.3s ease,
+    min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  font: inherit;
+  color: inherit;
+  user-select: none;
+}
+.sched-week-cell:hover {
+  background: color-mix(in srgb, var(--bg-hover) 70%, var(--bg-secondary));
+  border-color: color-mix(in srgb, var(--accent-indigo) 35%, var(--border));
+}
+.sched-week-cell.is-today {
+  border-color: var(--accent-indigo);
+  box-shadow: 0 0 0 1px var(--glow-indigo), 0 0 18px var(--glow-indigo);
+}
+.sched-week-cell.is-expanded {
+  background: var(--bg-secondary);
+  border-color: var(--accent-indigo);
+  box-shadow: 0 0 0 1px var(--accent-indigo), 0 12px 32px rgba(72, 102, 253, 0.22);
+  cursor: default;
+}
+
+.sched-week-cell-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.sched-week-cell-today-bar {
+  width: 3px;
+  height: 16px;
+  background: var(--accent-teal);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.sched-week-cell-day {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.sched-week-cell-day.is-today {
+  color: var(--text-primary);
+}
+.sched-week-cell-num {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+.sched-week-cell-num.is-today {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.sched-week-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+}
+.sched-week-cell-event {
+  background: var(--bg-hover);
+  border-left: 2px solid var(--accent-indigo);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+}
+.sched-week-cell-event-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+.sched-week-cell-event-time {
+  font-size: 10px;
+  font-weight: 600;
+}
+.sched-week-cell-event-bell {
+  font-size: 9px;
+  color: var(--accent-amber);
+}
+.sched-week-cell-event-title {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.sched-week-cell-empty {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  opacity: 0.6;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* When one cell is expanded the others shrink — show a hint of the day still */
+.sched-week-cell:not(.is-expanded) {
+  opacity: 0.85;
+}
+.sched-week-cell:not(.is-expanded):hover {
+  opacity: 1;
+}
+
+/* ── Expanded day plan overlay ── */
+.sched-week-expanded-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+  z-index: 5;
+  animation: schedExpandIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes schedExpandIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.sched-day-plan {
+  position: relative;
+  width: 100%;
+  pointer-events: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 16px 40px rgba(15, 18, 40, 0.20), 0 4px 16px rgba(72, 102, 253, 0.12);
+  min-height: 480px;
+  overflow: hidden;
+}
+
+.sched-day-plan-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sched-day-plan-day {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.sched-day-plan-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+.sched-day-plan-close {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-tertiary);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+.sched-day-plan-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sched-day-plan-body {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.sched-day-plan-timeline {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.sched-day-plan-timeline-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+.sched-day-plan-hours {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+}
+.sched-day-plan-hour-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--border);
+}
+.sched-day-plan-hour-row:last-child { border-bottom: none; }
+.sched-day-plan-hour-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  width: 40px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.sched-day-plan-hour-events {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sched-day-plan-hour-empty {
+  color: var(--text-tertiary);
+  opacity: 0.4;
+  font-size: 11px;
+  padding-top: 2px;
+}
+.sched-day-plan-event {
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--accent-indigo);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.sched-day-plan-event-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+.sched-day-plan-event-time {
+  font-weight: 600;
+}
+.sched-day-plan-event-type {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg-hover);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.sched-day-plan-event-title {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 12px;
+}
+.sched-day-plan-event-notes {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  margin-top: 4px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.sched-day-plan-notes {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+.sched-day-plan-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+.sched-day-plan-notes-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+.sched-day-plan-notes-hint {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  font-style: italic;
+}
+.sched-day-plan-notes-area {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 12px;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  font-family: inherit;
+}
+.sched-day-plan-notes-area::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}
+
+@media (max-width: 1100px) {
+  .sched-day-plan-body {
+    grid-template-columns: 1fr;
+  }
+  .sched-day-plan-notes {
+    min-height: 140px;
+  }
+}
+
 .sched-modal-overlay {
   position: fixed;
   inset: 0;
