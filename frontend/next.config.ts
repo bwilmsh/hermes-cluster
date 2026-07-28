@@ -1,16 +1,10 @@
 import type { NextConfig } from "next";
-import path from "path";
-
-// npm workspaces hoist `next` to the monorepo root. Turbopack must treat that
-// root as the project root, otherwise module resolution fails with
-// "Next.js package not found" and HMR panics in a refresh loop.
-const monorepoRoot = path.join(__dirname, "..");
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: monorepoRoot,
-  },
-  outputFileTracingRoot: monorepoRoot,
+  // Suppress the Node.js deprecation warning emitted by @supabase/supabase-js
+  // until we can move the project to Node 22. Pure build-time noise; doesn't
+  // affect functionality.
+  turbopack: {},
 };
 
 export default nextConfig;
