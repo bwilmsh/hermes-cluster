@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Geist fonts loaded via next/font in layout.tsx (GeistSans.variable / GeistMono.variable) */
 
@@ -71,28 +73,7 @@
   --shadow-elevated: 0 10px 30px rgba(72, 106, 254, 0.10), 0 4px 12px rgba(72, 106, 254, 0.05);
 }
 
-@theme inline {
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-bg-tertiary: var(--bg-tertiary);
-  --color-bg-hover: var(--bg-hover);
-  --color-border: var(--border);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-tertiary: var(--text-tertiary);
-  --color-accent-teal: var(--accent-teal);
-  --color-accent-indigo: var(--accent-indigo);
-  --color-accent-rose: var(--accent-rose);
-  --color-accent-amber: var(--accent-amber);
-  --color-accent-green: var(--accent-green);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --radius: var(--radius);
-  --radius-sm: var(--radius-sm);
-  --radius-lg: var(--radius-lg);
-  --shadow-card: var(--shadow-card);
-  --shadow-elevated: var(--shadow-elevated);
-}
+/* Tailwind v3 — theme tokens live in tailwind.config.js */
 
 /* ── Base ── */
 * { box-sizing: border-box; }
