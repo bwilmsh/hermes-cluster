@@ -20,6 +20,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     message: <path d="M4 5H20V15H12L8 19V15H4V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
     plus: <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
     due: <path d="M12 8V12L14.5 14.5M12 3C7 3 3 7 3 12C3 17 7 21 12 21C17 21 21 17 21 12C21 7 17 3 12 3ZM12 1V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
+    habit: <path d="M12 3C12 3 5 9 5 14C5 17.9 8.1 21 12 21C15.9 21 19 17.9 19 14C19 9 12 3 12 3ZM9 13C9 12.4 9.4 12 10 12H14C14.6 12 15 12.4 15 13V14C15 14.6 14.6 15 14 15H13V17C13 17.6 12.6 18 12 18C11.4 18 11 17.6 11 17V15H10C9.4 15 9 14.6 9 14V13Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
     sun: <path d="M12 3V5M12 19V21M5.6 5.6L7 7M17 17L18.4 18.4M3 12H5M19 12H21M5.6 18.4L7 17M17 7L18.4 5.6M12 8C14.2 8 16 9.8 16 12C16 14.2 14.2 16 12 16C9.8 16 8 14.2 8 12C8 9.8 9.8 8 12 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
     moon: <path d="M21 12.8C20.5 17.3 16.7 21 12 21C7 21 3 17 3 12C3 7.3 6.7 3.5 11.2 3C9.3 5.4 8.2 8.5 8.2 12C8.2 15.5 9.3 18.6 11.2 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />,
   };
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { href: "/scheduler", label: "Calendar", icon: "calendar" },
   { href: "/tasks", label: "Tasks", icon: "tasks" },
   { href: "/due-dates", label: "Due Dates", icon: "due" },
+  { href: "/habits", label: "Habits", icon: "habit" },
   { href: "/analytics", label: "Analytics", icon: "analytics" },
   { href: "/settings", label: "Settings", icon: "settings" },
   { href: "/help", label: "Help", icon: "help" },
