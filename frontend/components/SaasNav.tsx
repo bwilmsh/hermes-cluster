@@ -36,7 +36,6 @@ const NAV_ITEMS = [
   { href: "/scheduler", label: "Calendar", icon: "calendar" },
   { href: "/tasks", label: "Tasks", icon: "tasks" },
   { href: "/due-dates", label: "Due Dates", icon: "due" },
-  { href: "/team", label: "Team", icon: "team" },
   { href: "/analytics", label: "Analytics", icon: "analytics" },
   { href: "/settings", label: "Settings", icon: "settings" },
   { href: "/help", label: "Help", icon: "help" },
@@ -52,7 +51,6 @@ function resolveSearch(query: string): string {
     { keys: ["task", "tasks", "todo"], href: "/tasks" },
     { keys: ["calendar", "schedule", "scheduler", "meeting", "meetings"], href: "/scheduler" },
     { keys: ["due", "deadline", "deadlines"], href: "/due-dates" },
-    { keys: ["team", "member", "people"], href: "/team" },
     { keys: ["analytic", "analytics", "report", "metrics"], href: "/analytics" },
     { keys: ["setting", "settings", "profile", "account"], href: "/settings" },
     { keys: ["help", "support", "faq"], href: "/help" },
@@ -198,7 +196,7 @@ export function SaasTopNav() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search projects, tasks, team..."
+          placeholder="Search calendar, events, tasks…"
           className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-text-tertiary"
           style={{ color: "var(--text-primary)" }}
         />
@@ -237,10 +235,7 @@ export function SaasTopNav() {
         {/* User profile → settings */}
         <Link href="/settings" className="flex items-center gap-2" style={{ textDecoration: "none" }} title="Profile & settings">
           <div className="saas-avatar" style={{ background: "var(--accent-purple)" }}>B</div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Benji</span>
-            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Workspace Owner</span>
-          </div>
+          <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Benji</span>
         </Link>
 
         {/* New Project button */}

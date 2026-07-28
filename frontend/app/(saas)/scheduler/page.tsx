@@ -76,7 +76,7 @@ function seedEvents(): SchedEvent[] {
   const mon = startOfWeek(new Date());
   const iso = (offset: number) => toISODate(addDays(mon, offset));
   return [
-    { id: "1", title: "Team Standup", startTime: "09:00", endTime: "09:15", date: iso(0), itemType: "EVENT", status: "TODO", priority: "MEDIUM", reminder: true, tags: ["work"] },
+    { id: "1", title: "Standup", startTime: "09:00", endTime: "09:15", date: iso(0), itemType: "EVENT", status: "TODO", priority: "MEDIUM", reminder: true, tags: ["work"] },
     { id: "2", title: "Ship scheduler", startTime: "09:30", endTime: "12:00", date: iso(0), itemType: "TASK", status: "TODO", priority: "HIGH", reminder: false, tags: ["dev"] },
     { id: "3", title: "Client Review", startTime: "12:00", endTime: "13:00", date: iso(0), itemType: "APPOINTMENT", status: "TODO", priority: "HIGH", reminder: true, tags: ["client"] },
     { id: "4", title: "Lunch w/Alex", startTime: "13:30", endTime: "14:30", date: iso(0), itemType: "EVENT", status: "TODO", priority: "LOW", reminder: false, tags: ["social"] },
@@ -84,7 +84,7 @@ function seedEvents(): SchedEvent[] {
     { id: "6", title: "1:1 Manager", startTime: "10:00", endTime: "10:30", date: iso(1), itemType: "EVENT", status: "TODO", priority: "MEDIUM", reminder: true, tags: ["work"] },
     { id: "7", title: "Product Demo", startTime: "15:00", endTime: "16:00", date: iso(2), itemType: "APPOINTMENT", status: "TODO", priority: "HIGH", reminder: true, tags: ["client"] },
     { id: "8", title: "Sprint Review", startTime: "09:00", endTime: "10:00", date: iso(3), itemType: "EVENT", status: "TODO", priority: "MEDIUM", reminder: false, tags: ["work"] },
-    { id: "9", title: "Retro", startTime: "16:00", endTime: "17:00", date: iso(4), itemType: "EVENT", status: "TODO", priority: "LOW", reminder: false, tags: ["team"] },
+    { id: "9", title: "Retro", startTime: "16:00", endTime: "17:00", date: iso(4), itemType: "EVENT", status: "TODO", priority: "LOW", reminder: false, tags: ["reflect"] },
   ];
 }
 

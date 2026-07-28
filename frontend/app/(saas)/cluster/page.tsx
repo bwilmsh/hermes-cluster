@@ -22,7 +22,7 @@ export default function ClusterPage() {
     const route = text.toLowerCase().includes("book") || text.toLowerCase().includes("schedule") ? "booking" : "general";
     setMessages((prev) => [...prev, { role: "assistant", content: "", route }]);
 
-    const response = `I've analyzed your schedule. Here's your plan:\n\n1. ⚠ Review PR #142 (overdue)\n2. Team standup 09:00-09:15\n3. Ship scheduler 09:30-12:00\n4. Client review 12:00-13:00\n\nI can create calendar events for any of these. Just ask!`;
+    const response = `I've analyzed your schedule. Here's your plan:\n\n1. ⚠ Review PR #142 (overdue)\n2. Standup 09:00-09:15\n3. Ship scheduler 09:30-12:00\n4. Client review 12:00-13:00\n\nI can create calendar events for any of these. Just ask!`;
 
     let acc = "";
     for (const word of response.split(" ")) {

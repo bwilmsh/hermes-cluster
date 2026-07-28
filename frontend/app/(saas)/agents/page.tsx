@@ -55,7 +55,7 @@ function AgentChat({ agentId, onBack }: { agentId: string; onBack: () => void })
     setStreaming(true);
 
     // Simulate streaming response (offline mode)
-    const response = "I'd help you plan your day! Here's what I see:\n\n1. You have an overdue task: Review PR #142\n2. Team standup at 09:00\n3. Client review at 12:00\n\nWant me to prioritize these for you?";
+    const response = "I'd help you plan your day! Here's what I see:\n\n1. You have an overdue task: Review PR #142\n2. Standup at 09:00\n3. Client review at 12:00\n\nWant me to prioritize these for you?";
     const words = response.split(" ");
     let acc = "";
     for (const word of words) {

@@ -29,7 +29,7 @@ const MOCK_DUE: DueItem[] = [
   { id: "4", title: "Mobile App Redesign", subtitle: "Final mockups delivery", category: "Project", categoryColor: "#8B5CF6", categoryBg: "#F3E8FF", dueAt: now + 3 * DAY, priority: "high", progress: 72, avatar: "RB", avatarColor: "#22C55E" },
   { id: "5", title: "Client Proposal", subtitle: "Acme Corp — SOW + timeline", category: "Work", categoryColor: "#3B82F6", categoryBg: "#E3F2FD", dueAt: now + 5 * DAY, priority: "medium", progress: 30, avatar: "TL", avatarColor: "#F59E0B" },
   { id: "6", title: "Research Paper Draft", subtitle: "8 pages — MLA format", category: "Assignment", categoryColor: "#FF6B35", categoryBg: "#FFF1EC", dueAt: now + 7 * DAY, priority: "medium", progress: 15, avatar: "JD", avatarColor: "#FF6B35" },
-  { id: "7", title: "Team Retrospective", subtitle: "Sprint 14 — notes prep", category: "Meeting", categoryColor: "#22C55E", categoryBg: "#E8F5E9", dueAt: now + 10 * DAY, priority: "low", progress: 0, avatar: "All", avatarColor: "#3B82F6" },
+  { id: "7", title: "Retrospective", subtitle: "Sprint 14 — notes prep", category: "Meeting", categoryColor: "#22C55E", categoryBg: "#E8F5E9", dueAt: now + 10 * DAY, priority: "low", progress: 0, avatar: "Me", avatarColor: "#3B82F6" },
   { id: "8", title: "Security Audit Report", subtitle: "Q3 compliance review", category: "Project", categoryColor: "#8B5CF6", categoryBg: "#F3E8FF", dueAt: now + 14 * DAY, priority: "low", progress: 10, avatar: "MK", avatarColor: "#8B5CF6" },
 ];
 

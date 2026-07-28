@@ -5,7 +5,7 @@ export default function AnalyticsPage() {
     { label: "Total Projects", value: "12", change: "+2", trend: "up" },
     { label: "Completed Tasks", value: "248", change: "+18%", trend: "up" },
     { label: "Avg Completion Time", value: "3.2d", change: "-0.5d", trend: "up" },
-    { label: "Team Velocity", value: "94%", change: "+5%", trend: "up" },
+    { label: "Completion Rate", value: "94%", change: "+5%", trend: "up" },
     { label: "Overdue Tasks", value: "7", change: "-3", trend: "up" },
     { label: "Client Satisfaction", value: "4.8/5", change: "+0.2", trend: "up" },
   ];

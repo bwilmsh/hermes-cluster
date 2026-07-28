@@ -4,8 +4,8 @@ import { useState } from "react";
 import { AskAIInput } from "@/components/AskAIInput";
 
 const MOCK_GROUPS = [
-  { id: "1", name: "Planning Team", members: ["Cluster AI", "Booking Agent"] },
-  { id: "2", name: "Customer Support", members: ["Cluster AI", "Customer Memory"] },
+  { id: "1", name: "Daily Planning", members: ["Cluster AI", "Booking Agent"] },
+  { id: "2", name: "Personal Assistant", members: ["Cluster AI", "Customer Memory"] },
 ];
 
 export default function GroupChatsPage() {

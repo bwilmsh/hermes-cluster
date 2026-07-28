@@ -13,7 +13,7 @@ function aiReply(input: string, page: string): string {
   const q = input.trim().toLowerCase();
 
   if (/\b(event|meeting|appointment|schedule)\b/.test(q) && /\b(add|create|book|set|make|plan)\b/.test(q)) {
-    return "Got it — I can add that to your calendar. Open **Scheduler**, double-click a date, and fill in the time, title, and reminder. Or tell me the exact day and time (e.g. “Friday 3pm team sync”) and I’ll guide the rest.";
+    return "Got it — I can add that to your calendar. Open **Scheduler**, double-click a date, and fill in the time, title, and reminder. Or tell me the exact day and time (e.g. “Friday 3pm sync”) and I’ll guide the rest.";
   }
   if (/\b(task|todo|to-do)\b/.test(q) && /\b(add|create|make|new)\b/.test(q)) {
     return "Sure — go to **Tasks** and tap **+ New Task**, or describe it here (title + project). I’ll keep it on your list for this week.";

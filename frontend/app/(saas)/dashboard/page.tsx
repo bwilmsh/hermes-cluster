@@ -47,7 +47,7 @@ const STATS: Stat[] = [
   { id: "projects", label: "Active Projects", value: "12", icon: "projects", iconColor: "#FF6B35", trend: "up", trendValue: "+2", trendLabel: "this week", href: "/projects" },
   { id: "tasks", label: "Completed Tasks", value: "248", icon: "tasks", iconColor: "#22C55E", trend: "up", trendValue: "+18%", trendLabel: "this month", href: "/tasks" },
   { id: "deadlines", label: "Upcoming Deadlines", value: "7", icon: "calendar", iconColor: "#F59E0B", trend: "down", trendValue: "-3", trendLabel: "vs last week", href: "/due-dates" },
-  { id: "team", label: "Team Performance", value: "94%", icon: "analytics", iconColor: "#3B82F6", trend: "up", trendValue: "+5%", trendLabel: "this sprint", href: "/analytics" },
+  { id: "team", label: "Productivity Score", value: "94%", icon: "analytics", iconColor: "#3B82F6", trend: "up", trendValue: "+5%", trendLabel: "this week", href: "/analytics" },
 ];
 
 function StatCard({ stat }: { stat: Stat }) {
@@ -329,7 +329,7 @@ const TIMELINE_TASKS: TimelineTask[] = [
   { id: "t5", title: "Code Review", day: 3, color: "#F59E0B", bg: "#FFF8E1", members: ["RB", "TL"] },
   { id: "t6", title: "Deploy v2.1", day: 4, color: "#FF6B35", bg: "#FFF1EC", members: ["MK", "JD"] },
   { id: "t7", title: "Retro Meeting", day: 4, color: "#8B5CF6", bg: "#F3E8FF", members: ["AS", "RB", "TL", "JD"] },
-  { id: "t8", title: "Team Lunch", day: 5, color: "#22C55E", bg: "#E8F5E9", members: ["All"] },
+  { id: "t8", title: "Lunch break", day: 5, color: "#22C55E", bg: "#E8F5E9", members: ["Me"] },
 ];
 
 function WeeklyTimeline() {

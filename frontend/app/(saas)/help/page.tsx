@@ -3,7 +3,8 @@
 export default function HelpPage() {
   const faqs = [
     { q: "How do I create a new project?", a: "Click the 'New Project' button in the top navigation bar or on the Projects page." },
-    { q: "How do I invite team members?", a: "Go to the Team page and click 'Invite Member' to send an email invitation." },
+    { q: "How do I add an event to my calendar?", a: "Open the Calendar page and double-click on a day, or use the Add Event button. You can also ask the AI assistant." },
+    { q: "Can I set reminders on tasks and events?", a: "Yes — toggle the Reminder switch when creating an event, or click the bell icon next to any task." },
     { q: "Can I customize my dashboard?", a: "Yes, use the Manage button on the dashboard to toggle widgets on and off." },
     { q: "How do I change the theme?", a: "Currently the dashboard uses a light SaaS theme. Dark mode toggle is available on the dashboard AI Assistant card." },
     { q: "How do I set up integrations?", a: "Navigate to the Integrations page to connect external services." },
