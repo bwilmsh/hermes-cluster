@@ -1,524 +1,297 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import {
-  useDueDates,
-  useEvents,
-  addDueDate,
-  toggleDueDateDone,
-  deleteDueDate,
-  PRIORITY_META,
-  dateOnly,
-  type DueDate,
-  type Priority,
-} from "@/lib/eventStore";
+import { useState, useEffect, useCallback } from "react";
 
-/**
- * Due Dates page.
- *
- * Due Dates are explicit deadlines that DON'T need a specific calendar slot.
- * Examples: "Math Problem Set 4 — due Friday", "Bill payment — due 28th",
- * "Biology exam — cumulative".
- *
- * When you add a Due Date, an Appointment is automatically added to the
- * calendar at the same date/time so it shows up on the scheduler too.
- * Completing the Due Date marks the calendar event DONE; deleting the Due
- * Date removes the calendar event.
- *
- * For tasks that DO fit a specific time slot on your calendar (e.g. "Ship
- * scheduler view, 9:30am-12pm Tuesday"), use the Tasks page instead.
- */
+/* ── Types ── */
+interface DueDate {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string; // ISO date
+  dueTime: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  status: "pending" | "completed" | "overdue";
+  category: "assignment" | "exam" | "work" | "personal";
+}
 
-const DAY = 24 * 60 * 60 * 1000;
-const HOUR = 60 * 60 * 1000;
+/* ── Demo data ── */
+const NOW = new Date();
+const DAY = 86400000;
 
-const CATEGORY_SUGGESTIONS = [
-  "Assignment", "Exam", "Project", "Work", "Personal", "Bill", "Meeting", "Health",
+const DEMO_DUE_DATES: DueDate[] = [
+  { id: "dd1", title: "CS 410 Homework 5", description: "Graph algorithms problem set", dueDate: new Date(NOW.getTime() - DAY).toISOString().slice(0, 10), dueTime: "23:59", priority: "urgent", status: "overdue", category: "assignment" },
+  { id: "dd2", title: "Q3 Revenue Report", description: "Final numbers for board meeting", dueDate: new Date(NOW.getTime() - DAY * 2).toISOString().slice(0, 10), dueTime: "17:00", priority: "high", status: "overdue", category: "work" },
+  { id: "dd3", title: "Physics Lab Report", description: "Electromagnetic induction lab", dueDate: new Date(NOW.getTime() + DAY).toISOString().slice(0, 10), dueTime: "14:00", priority: "high", status: "pending", category: "assignment" },
+  { id: "dd4", title: "Midterm Exam — Data Structures", description: "Chapters 1–8, open notes", dueDate: new Date(NOW.getTime() + DAY * 3).toISOString().slice(0, 10), dueTime: "09:00", priority: "urgent", status: "pending", category: "exam" },
+  { id: "dd5", title: "Client proposal draft", description: "Draft for Acme Corp re-engagement", dueDate: new Date(NOW.getTime() + DAY * 5).toISOString().slice(0, 10), dueTime: "12:00", priority: "medium", status: "pending", category: "work" },
+  { id: "dd6", title: "Renew gym membership", description: "", dueDate: new Date(NOW.getTime() + DAY * 7).toISOString().slice(0, 10), dueTime: "", priority: "low", status: "pending", category: "personal" },
 ];
 
-function todayDateInputValue(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function nowTimeInputValue(): string {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-function useCountdown(targetMs: number) {
-  const [remaining, setRemaining] = useState(() => targetMs - Date.now());
-  useEffect(() => {
-    setRemaining(targetMs - Date.now());
-    const id = setInterval(() => setRemaining(targetMs - Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [targetMs]);
-  return remaining;
-}
-
-function formatCountdown(ms: number): { text: string; isOverdue: boolean; isToday: boolean } {
-  if (ms < 0) {
-    const overdue = Math.abs(ms);
-    const days = Math.floor(overdue / DAY);
-    const hours = Math.floor((overdue % DAY) / HOUR);
-    const mins = Math.floor((overdue % HOUR) / (60 * 1000));
-    if (days > 0) return { text: `${days}d ${hours}h overdue`, isOverdue: true, isToday: false };
-    if (hours > 0) return { text: `${hours}h ${mins}m overdue`, isOverdue: true, isToday: false };
-    return { text: `${mins}m overdue`, isOverdue: true, isToday: false };
+/* ── Helpers ── */
+function priorityColor(p: string) {
+  switch (p) {
+    case "urgent": return "#F43F5E";
+    case "high": return "#F59E0B";
+    case "medium": return "var(--accent-teal)";
+    case "low": return "var(--text-tertiary)";
+    default: return "var(--text-tertiary)";
   }
-  const days = Math.floor(ms / DAY);
-  const hours = Math.floor((ms % DAY) / HOUR);
-  const mins = Math.floor((ms % HOUR) / (60 * 1000));
-  const secs = Math.floor((ms % (60 * 1000)) / 1000);
-  if (days > 0) return { text: `${days}d ${hours}h ${mins}m left`, isOverdue: false, isToday: days === 0 };
-  if (hours > 0) return { text: `${hours}h ${mins}m ${secs}s left`, isOverdue: false, isToday: true };
-  return { text: `${mins}m ${secs}s left`, isOverdue: false, isToday: true };
 }
 
-function CountdownDisplay({ dueAt }: { dueAt: number }) {
-  const remaining = useCountdown(dueAt);
-  const { text, isOverdue, isToday } = formatCountdown(remaining);
-  const color = isOverdue ? "#F43F5E" : isToday ? "#FF6B35" : "var(--text-tertiary)";
-  return (
-    <div className="flex items-center gap-1.5">
-      {(isOverdue || isToday) && (
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: color,
-            animation: "pulseGlow 1.5s ease-in-out infinite",
-            flexShrink: 0,
-          }}
-        />
-      )}
-      <span className="text-xs font-semibold tnum" style={{ color }}>
-        {text}
-      </span>
-    </div>
-  );
+function categoryIcon(c: string) {
+  switch (c) {
+    case "assignment": return "📝";
+    case "exam": return "🎯";
+    case "work": return "💼";
+    case "personal": return "👤";
+    default: return "📋";
+  }
+}
+
+function getCountdown(dueDate: string, dueTime: string): string {
+  const target = new Date(`${dueDate}T${dueTime || "23:59"}`);
+  const diff = target.getTime() - Date.now();
+  if (diff < 0) {
+    const daysOver = Math.ceil(Math.abs(diff) / DAY);
+    return `${daysOver}d overdue`;
+  }
+  const daysLeft = Math.floor(diff / DAY);
+  const hoursLeft = Math.floor((diff % DAY) / 3600000);
+  if (daysLeft > 0) return `${daysLeft}d ${hoursLeft}h left`;
+  if (hoursLeft > 0) return `${hoursLeft}h left`;
+  const minsLeft = Math.floor(diff / 60000);
+  return `${minsLeft}m left`;
 }
 
 export default function DueDatesPage() {
-  const dueDates = useDueDates();
-  const events = useEvents();
-  const [filter, setFilter] = useState<"all" | "overdue" | "today" | "upcoming" | "completed">("all");
-  const [showNew, setShowNew] = useState(false);
+  const [items, setItems] = useState<DueDate[]>(DEMO_DUE_DATES);
+  const [filter, setFilter] = useState<"all" | "overdue" | "upcoming" | "completed">("all");
+  const [catFilter, setCatFilter] = useState<string>("all");
+  const [showAdd, setShowAdd] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
-  // Form state
-  const [fTitle, setFTitle] = useState("");
-  const [fDesc, setFDesc] = useState("");
-  const [fDate, setFDate] = useState(todayDateInputValue());
-  const [fTime, setFTime] = useState(nowTimeInputValue());
-  const [fPriority, setFPriority] = useState<Priority>("MEDIUM");
-  const [fCategory, setFCategory] = useState("Assignment");
-  const [fAutoCal, setFAutoCal] = useState(true);
+  // Live countdown timer
+  useEffect(() => {
+    const iv = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(iv);
+  }, []);
 
-  const resetForm = () => {
-    setShowNew(false);
-    setFTitle("");
-    setFDesc("");
-    setFDate(todayDateInputValue());
-    setFTime(nowTimeInputValue());
-    setFPriority("MEDIUM");
-    setFCategory("Assignment");
-    setFAutoCal(true);
-  };
+  const toggleComplete = useCallback((id: string) => {
+    setItems((prev) =>
+      prev.map((d) =>
+        d.id === id
+          ? { ...d, status: d.status === "completed" ? "pending" : "completed" }
+          : d
+      )
+    );
+  }, []);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fTitle.trim()) return;
-    // Build ISO datetime in user's local TZ
-    const dueAt = new Date(`${fDate}T${fTime}:00`).toISOString();
-    addDueDate({
-      title: fTitle.trim(),
-      description: fDesc.trim() || undefined,
-      dueAt,
-      priority: fPriority,
-      category: fCategory.trim() || undefined,
-      autoAddToCalendar: fAutoCal,
-    });
-    resetForm();
-  };
+  const filtered = items.filter((d) => {
+    if (filter === "overdue" && d.status !== "overdue") return false;
+    if (filter === "upcoming" && d.status !== "pending") return false;
+    if (filter === "completed" && d.status !== "completed") return false;
+    if (catFilter !== "all" && d.category !== catFilter) return false;
+    return true;
+  });
 
-  const filtered = useMemo(() => {
-    const now = Date.now();
-    return dueDates.filter((d) => {
-      const r = new Date(d.dueAt).getTime() - now;
-      if (filter === "overdue") return !d.completed && r < 0;
-      if (filter === "today") {
-        if (d.completed) return false;
-        return r > 0 && r < DAY;
-      }
-      if (filter === "upcoming") {
-        if (d.completed) return false;
-        return r >= DAY;
-      }
-      if (filter === "completed") return d.completed;
-      return true;
-    }).sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
-  }, [dueDates, filter]);
+  // Sort: overdue first, then by due date
+  const sorted = [...filtered].sort((a, b) => {
+    if (a.status === "overdue" && b.status !== "overdue") return -1;
+    if (b.status === "overdue" && a.status !== "overdue") return 1;
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  });
 
-  const stats = useMemo(() => {
-    const now = Date.now();
-    const overdue = dueDates.filter((d) => !d.completed && new Date(d.dueAt).getTime() < now).length;
-    const today = dueDates.filter((d) => {
-      if (d.completed) return false;
-      const r = new Date(d.dueAt).getTime() - now;
-      return r > 0 && r < DAY;
-    }).length;
-    const upcoming = dueDates.filter((d) => !d.completed && new Date(d.dueAt).getTime() - now >= DAY).length;
-    const completed = dueDates.filter((d) => d.completed).length;
-    return { overdue, today, upcoming, completed, total: dueDates.length };
-  }, [dueDates]);
+  const overdueCount = items.filter((d) => d.status === "overdue").length;
+  const upcomingCount = items.filter((d) => d.status === "pending").length;
+  const completedCount = items.filter((d) => d.status === "completed").length;
 
   return (
     <div className="flex flex-col gap-6 animate-fade-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-            Due Dates
-          </h1>
-          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
-            Deadlines & reminders — auto-added to your calendar
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="accent-bar text-xl font-semibold">Due Dates</div>
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className="text-sm px-4 py-2 rounded-lg transition-colors"
+          style={{ background: "var(--accent-indigo)", color: "white" }}
+        >
+          + Add
+        </button>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="glass p-4 text-center">
+          <div className="tnum text-2xl font-bold" style={{ color: "#F43F5E" }}>{overdueCount}</div>
+          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Overdue</div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/tasks"
-            className="text-xs px-3 py-2 rounded-md transition-colors"
-            style={{ color: "var(--text-secondary)", border: "1px solid var(--border)" }}
-            title="Tasks fit a specific calendar slot — use this when you have a time"
-          >
-            ← Need a scheduled task?
-          </Link>
-          <button
-            type="button"
-            className="saas-btn-primary flex items-center gap-1.5 px-4 py-2 text-sm"
-            onClick={() => (showNew ? resetForm() : setShowNew(true))}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            {showNew ? "Cancel" : "Add Due Date"}
-          </button>
+        <div className="glass p-4 text-center">
+          <div className="tnum text-2xl font-bold" style={{ color: "var(--accent-teal)" }}>{upcomingCount}</div>
+          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Upcoming</div>
+        </div>
+        <div className="glass p-4 text-center">
+          <div className="tnum text-2xl font-bold" style={{ color: "#22C55E" }}>{completedCount}</div>
+          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Completed</div>
         </div>
       </div>
 
-      {/* Add form */}
-      {showNew && (
-        <form onSubmit={submit} className="saas-card-lg p-5">
-          <div className="flex flex-col gap-4">
-            <div>
-              <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                What's due?
-              </label>
-              <input
-                type="text"
-                value={fTitle}
-                onChange={(e) => setFTitle(e.target.value)}
-                placeholder="e.g. Math Problem Set 4"
-                className="w-full px-3 py-2 rounded-lg text-sm bg-transparent border focus:outline-none"
-                style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-                autoFocus
-                required
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                Notes (optional)
-              </label>
-              <input
-                type="text"
-                value={fDesc}
-                onChange={(e) => setFDesc(e.target.value)}
-                placeholder="e.g. Chapter 7 — Linear Algebra"
-                className="w-full px-3 py-2 rounded-lg text-sm bg-transparent border focus:outline-none"
-                style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div>
-                <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  Due date
-                </label>
-                <input
-                  type="date"
-                  value={fDate}
-                  onChange={(e) => setFDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-transparent border focus:outline-none"
-                  style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  Time
-                </label>
-                <input
-                  type="time"
-                  value={fTime}
-                  onChange={(e) => setFTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-transparent border focus:outline-none"
-                  style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  Category
-                </label>
-                <input
-                  list="dd-categories"
-                  value={fCategory}
-                  onChange={(e) => setFCategory(e.target.value)}
-                  placeholder="Assignment"
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-transparent border focus:outline-none"
-                  style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-                />
-                <datalist id="dd-categories">
-                  {CATEGORY_SUGGESTIONS.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  Priority
-                </label>
-                <select
-                  value={fPriority}
-                  onChange={(e) => setFPriority(e.target.value as Priority)}
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-transparent border focus:outline-none"
-                  style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-                >
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="URGENT">Urgent</option>
-                </select>
-              </div>
-            </div>
-
-            <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: "var(--text-secondary)" }}>
-              <input
-                type="checkbox"
-                checked={fAutoCal}
-                onChange={(e) => setFAutoCal(e.target.checked)}
-              />
-              <span>
-                Also add this to my calendar as an appointment at the due time
-                <span style={{ color: "var(--text-tertiary)" }}> (recommended — you'll see it on the scheduler and get a reminder)</span>
-              </span>
-            </label>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="saas-btn px-4 py-2 text-sm" onClick={resetForm}>
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="saas-btn-primary px-4 py-2 text-sm"
-                disabled={!fTitle.trim()}
-                style={{ opacity: fTitle.trim() ? 1 : 0.5 }}
-              >
-                Add due date
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <StatChip label="Overdue" value={stats.overdue} accent="#F43F5E" />
-        <StatChip label="Today" value={stats.today} accent="#FF6B35" />
-        <StatChip label="Upcoming" value={stats.upcoming} accent="#3B82F6" />
-        <StatChip label="Completed" value={stats.completed} accent="#22C55E" />
-        <StatChip label="Total" value={stats.total} accent="var(--accent-indigo)" />
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "var(--bg-tertiary)", width: "fit-content" }}>
-        {([
-          { id: "all", label: `All · ${stats.total}` },
-          { id: "overdue", label: `Overdue · ${stats.overdue}` },
-          { id: "today", label: `Today · ${stats.today}` },
-          { id: "upcoming", label: `Upcoming · ${stats.upcoming}` },
-          { id: "completed", label: `Completed · ${stats.completed}` },
-        ] as const).map((f) => (
+      {/* Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {(["all", "overdue", "upcoming", "completed"] as const).map((f) => (
           <button
-            key={f.id}
-            type="button"
-            onClick={() => setFilter(f.id)}
-            className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+            key={f}
+            onClick={() => setFilter(f)}
+            className="text-xs px-3 py-1.5 rounded-full capitalize transition-colors"
             style={{
-              background: filter === f.id ? "var(--bg-secondary)" : "transparent",
-              color: filter === f.id ? "var(--text-primary)" : "var(--text-tertiary)",
-              boxShadow: filter === f.id ? "var(--shadow-card)" : "none",
+              background: filter === f ? "var(--accent-indigo)" : "var(--bg-hover)",
+              color: filter === f ? "white" : "var(--text-secondary)",
             }}
           >
-            {f.label}
+            {f}
+          </button>
+        ))}
+        <span className="text-xs" style={{ color: "var(--border)" }}>|</span>
+        {(["all", "assignment", "exam", "work", "personal"] as const).map((c) => (
+          <button
+            key={c}
+            onClick={() => setCatFilter(c)}
+            className="text-xs px-3 py-1.5 rounded-full capitalize transition-colors"
+            style={{
+              background: catFilter === c ? "var(--accent-teal)" : "var(--bg-hover)",
+              color: catFilter === c ? "white" : "var(--text-secondary)",
+            }}
+          >
+            {c === "all" ? "All" : `${categoryIcon(c)} ${c}`}
           </button>
         ))}
       </div>
 
-      {/* Due date cards grid */}
-      {filtered.length === 0 ? (
-        <div className="saas-card-lg p-12 text-center">
-          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
-            {filter === "all"
-              ? "No due dates yet. Click Add Due Date to create one."
-              : filter === "completed"
-              ? "Nothing completed yet."
-              : `No ${filter} due dates. You're all caught up!`}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((item) => (
-            <DueDateCard key={item.id} item={item} onLinkedEventExists={!!events.find((e) => e.id === item.calendarEventId)} />
-          ))}
+      {/* Add form (collapsible) */}
+      {showAdd && (
+        <div className="glass p-5 space-y-3 animate-scale-in">
+          <input
+            type="text"
+            placeholder="Title"
+            className="w-full px-3 py-2 rounded-lg text-sm"
+            style={{ background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+          />
+          <textarea
+            placeholder="Description (optional)"
+            rows={2}
+            className="w-full px-3 py-2 rounded-lg text-sm resize-none"
+            style={{ background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+          />
+          <div className="flex gap-3">
+            <input
+              type="date"
+              className="flex-1 px-3 py-2 rounded-lg text-sm tnum"
+              style={{ background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+            />
+            <input
+              type="time"
+              className="w-28 px-3 py-2 rounded-lg text-sm tnum"
+              style={{ background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+            />
+            <select
+              className="px-3 py-2 rounded-lg text-sm"
+              style={{ background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+            <select
+              className="px-3 py-2 rounded-lg text-sm"
+              style={{ background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+            >
+              <option value="assignment">Assignment</option>
+              <option value="exam">Exam</option>
+              <option value="work">Work</option>
+              <option value="personal">Personal</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowAdd(false)}
+              className="text-sm px-4 py-2 rounded-lg"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => setShowAdd(false)}
+              className="text-sm px-4 py-2 rounded-lg"
+              style={{ background: "var(--accent-indigo)", color: "white" }}
+            >
+              Add Due Date
+            </button>
+          </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function StatChip({ label, value, accent }: { label: string; value: number; accent: string }) {
-  return (
-    <div
-      className="p-3 rounded-lg flex flex-col gap-1"
-      style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
-    >
-      <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}</span>
-      <span className="text-xl font-bold tnum" style={{ color: accent }}>{value}</span>
-    </div>
-  );
-}
-
-function DueDateCard({ item, onLinkedEventExists }: { item: DueDate; onLinkedEventExists: boolean }) {
-  const meta = PRIORITY_META[item.priority];
-  const dueMs = new Date(item.dueAt).getTime();
-  const dueLabel = new Date(item.dueAt).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-  const isOverdue = !item.completed && dueMs < Date.now();
-
-  return (
-    <div
-      className="saas-card p-5 flex flex-col gap-3 group"
-      style={{
-        opacity: item.completed ? 0.65 : 1,
-      }}
-    >
-      {/* Top row: category + priority + completion */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {item.category && (
-            <span className="saas-pill" style={{ color: "var(--accent-indigo)", background: "rgba(72, 102, 254, 0.12)" }}>
-              {item.category}
-            </span>
-          )}
-          <span className="saas-pill" style={{ color: meta.color, background: meta.bg }}>
-            {meta.label}
-          </span>
-          {onLinkedEventExists && (
-            <span
-              className="saas-pill"
-              title="Also added to your calendar"
-              style={{ color: "var(--text-tertiary)", background: "var(--bg-tertiary)" }}
+      {/* Due date cards */}
+      <div className="space-y-3">
+        {sorted.map((d) => (
+          <div
+            key={d.id}
+            className="glass flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:brightness-110"
+            style={{ borderLeft: `3px solid ${priorityColor(d.priority)}` }}
+            onClick={() => toggleComplete(d.id)}
+          >
+            {/* Status checkbox */}
+            <div
+              className="w-5 h-5 rounded-md flex items-center justify-center text-xs shrink-0"
+              style={{
+                border: `2px solid ${d.status === "completed" ? "#22C55E" : d.status === "overdue" ? "#F43F5E" : "var(--border)"}`,
+                background: d.status === "completed" ? "#22C55E" : "transparent",
+                color: d.status === "completed" ? "white" : "transparent",
+              }}
             >
-              📅 on calendar
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => toggleDueDateDone(item.id)}
-          aria-label={item.completed ? "Mark as not done" : "Mark as done"}
-          className="shrink-0 flex items-center justify-center transition-all"
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 6,
-            border: `2px solid ${item.completed ? "var(--accent)" : "var(--border)"}`,
-            background: item.completed ? "var(--accent)" : "transparent",
-            cursor: "pointer",
-          }}
-        >
-          {item.completed && (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M5 12l5 5L20 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </button>
-      </div>
+              {d.status === "completed" ? "✓" : ""}
+            </div>
 
-      {/* Title + description */}
-      <div>
-        <div
-          className="text-sm font-semibold"
-          style={{
-            color: "var(--text-primary)",
-            textDecoration: item.completed ? "line-through" : "none",
-          }}
-        >
-          {item.title}
-        </div>
-        {item.description && (
-          <div className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-            {item.description}
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className={`text-sm font-medium ${d.status === "completed" ? "line-through opacity-50" : ""}`}>
+                {categoryIcon(d.category)} {d.title}
+              </div>
+              {d.description && (
+                <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>
+                  {d.description}
+                </div>
+              )}
+            </div>
+
+            {/* Priority badge */}
+            <span
+              className="text-xs px-2 py-0.5 rounded-full capitalize shrink-0"
+              style={{ background: "var(--bg-hover)", color: priorityColor(d.priority) }}
+            >
+              {d.priority}
+            </span>
+
+            {/* Countdown */}
+            <div className="tnum text-xs text-right shrink-0 min-w-[80px]" style={{
+              color: d.status === "overdue" ? "#F43F5E" : d.status === "completed" ? "#22C55E" : "var(--text-tertiary)"
+            }}>
+              {d.status === "completed" ? "Done" : getCountdown(d.dueDate, d.dueTime)}
+            </div>
+
+            {/* Due date */}
+            <div className="tnum text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
+              {new Date(d.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              {d.dueTime && <span> {d.dueTime}</span>}
+            </div>
+          </div>
+        ))}
+
+        {sorted.length === 0 && (
+          <div className="text-center py-12" style={{ color: "var(--text-tertiary)" }}>
+            <div className="text-4xl mb-3">📋</div>
+            <div className="text-sm">No due dates match your filters</div>
           </div>
         )}
-      </div>
-
-      {/* Countdown */}
-      {!item.completed && (
-        <div
-          className="flex items-center justify-between p-2 rounded-lg"
-          style={{ background: "var(--bg-tertiary)", borderRadius: "var(--radius-xs)" }}
-        >
-          <div className="flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: "var(--text-tertiary)" }}>
-              <path d="M12 8V12L14.5 14.5M12 3C7 3 3 7 3 12C3 17 7 21 12 21C17 21 21 17 21 12C21 7 17 3 12 3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{isOverdue ? "Overdue" : "Due"}</span>
-          </div>
-          <CountdownDisplay dueAt={dueMs} />
-        </div>
-      )}
-
-      {/* Bottom row: full date + delete */}
-      <div className="flex items-center justify-between pt-1" style={{ borderTop: "1px solid var(--border-light)" }}>
-        <span className="text-xs tnum" style={{ color: "var(--text-tertiary)" }}>
-          {dueLabel}
-        </span>
-        <button
-          type="button"
-          onClick={() => deleteDueDate(item.id)}
-          aria-label="Delete due date"
-          className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: 4,
-            borderRadius: 6,
-            color: "var(--accent-rose)",
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
       </div>
     </div>
   );

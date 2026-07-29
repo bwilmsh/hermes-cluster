@@ -1,175 +1,147 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 interface Notification {
   id: string;
+  type: "reminder" | "overdue" | "achievement" | "system" | "mention";
   title: string;
-  body: string;
-  when: string;
-  type: "task" | "project" | "meeting" | "team" | "system";
+  description: string;
+  timestamp: string;
   read: boolean;
-  href: string;
+  actionUrl?: string;
 }
 
-const INITIAL: Notification[] = [
-  {
-    id: "n1",
-    title: "Deadline approaching",
-    body: "Biology Midterm Exam is due in 6 hours",
-    when: "Just now",
-    type: "task",
-    read: false,
-    href: "/due-dates",
-  },
-  {
-    id: "n2",
-    title: "API Migration at risk",
-    body: "Project progress is behind schedule (45%)",
-    when: "12 min ago",
-    type: "project",
-    read: false,
-    href: "/projects",
-  },
-  {
-    id: "n3",
-    title: "Daily Standup starting soon",
-    body: "Zoom · 09:00 AM with JD, MK, AS",
-    when: "1h ago",
-    type: "meeting",
-    read: false,
-    href: "/scheduler",
-  },
-  {
-    id: "n4",
-    title: "Habit streak completed",
-    body: "Morning Run — 7 day streak",
-    when: "3h ago",
-    type: "team",
-    read: true,
-    href: "/habits",
-  },
-  {
-    id: "n5",
-    title: "AI assistant finished",
-    body: "Cluster AI scheduled your top 3 priorities",
-    when: "Yesterday",
-    type: "team",
-    read: true,
-    href: "/cluster",
-  },
-  {
-    id: "n6",
-    title: "Weekly report ready",
-    body: "Your analytics summary for this week is available",
-    when: "Yesterday",
-    type: "system",
-    read: true,
-    href: "/analytics",
-  },
+const DEMO_NOTIFICATIONS: Notification[] = [
+  { id: "n1", type: "overdue", title: "PR #142 review overdue", description: "Was due yesterday — high priority", timestamp: new Date(Date.now() - 1800000).toISOString(), read: false },
+  { id: "n2", type: "reminder", title: "Standup in 15 minutes", description: "Daily standup at 09:00", timestamp: new Date(Date.now() - 600000).toISOString(), read: false },
+  { id: "n3", type: "achievement", title: "5-day streak! 🔥", description: "You've completed all habits for 5 consecutive days", timestamp: new Date(Date.now() - 3600000).toISOString(), read: false },
+  { id: "n4", type: "mention", title: "Booking Agent mentioned you", description: "\"I've booked the conference room for Thursday @benji\"", timestamp: new Date(Date.now() - 7200000).toISOString(), read: true },
+  { id: "n5", type: "system", title: "GitHub integration expired", description: "Reconnect to restore PR tracking", timestamp: new Date(Date.now() - 86400000).toISOString(), read: true },
+  { id: "n6", type: "reminder", title: "Client review tomorrow", description: "Prepare deck for Acme Corp review at 12:00", timestamp: new Date(Date.now() - 100000000).toISOString(), read: true },
 ];
 
-const TYPE_COLOR: Record<Notification["type"], string> = {
-  task: "#F59E0B",
-  project: "#FF6B35",
-  meeting: "#3B82F6",
-  team: "#8B5CF6",
-  system: "#22C55E",
-};
+function typeIcon(t: string) {
+  switch (t) {
+    case "overdue": return "⚠️";
+    case "reminder": return "🔔";
+    case "achievement": return "🏆";
+    case "system": return "⚙️";
+    case "mention": return "💬";
+    default: return "●";
+  }
+}
+
+function typeColor(t: string) {
+  switch (t) {
+    case "overdue": return "#F43F5E";
+    case "reminder": return "var(--accent-teal)";
+    case "achievement": return "#22C55E";
+    case "system": return "var(--text-tertiary)";
+    case "mention": return "var(--accent-indigo)";
+    default: return "var(--text-tertiary)";
+  }
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default function NotificationsPage() {
-  const [items, setItems] = useState(INITIAL);
+  const [notifications, setNotifications] = useState<Notification[]>(DEMO_NOTIFICATIONS);
+  const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
 
-  const unread = items.filter((n) => !n.read).length;
+  const markRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  };
 
-  const markAllRead = () => setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-  const markRead = (id: string) =>
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  const clearRead = () => setItems((prev) => prev.filter((n) => !n.read));
+  const markAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const filtered = notifications.filter((n) => {
+    if (filter === "unread") return !n.read;
+    if (filter === "read") return n.read;
+    return true;
+  });
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="animate-fade-slide-up">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-            Notifications
-          </h1>
-          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
-            {unread > 0 ? `${unread} unread` : "You're all caught up"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="saas-btn px-4 py-2 text-sm"
-            onClick={markAllRead}
-            disabled={unread === 0}
-          >
-            Mark all read
-          </button>
-          <button
-            type="button"
-            className="saas-btn px-4 py-2 text-sm"
-            onClick={clearRead}
-            disabled={!items.some((n) => n.read)}
-          >
-            Clear read
-          </button>
+    <div className="flex flex-col gap-6 animate-fade-slide-up">
+      <div className="flex items-center justify-between">
+        <div className="accent-bar text-xl font-semibold">Notifications</div>
+        <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllRead}
+              className="text-xs px-3 py-1.5 rounded-full"
+              style={{ background: "var(--bg-hover)", color: "var(--text-tertiary)" }}
+            >
+              Mark all read
+            </button>
+          )}
+          <span className="tnum text-xs px-2.5 py-1 rounded-full" style={{ background: unreadCount > 0 ? "var(--accent-indigo)" : "var(--bg-hover)", color: unreadCount > 0 ? "white" : "var(--text-tertiary)" }}>
+            {unreadCount} unread
+          </span>
         </div>
       </div>
 
-      <div className="saas-card-lg p-2 flex flex-col gap-1">
-        {items.length === 0 && (
-          <div className="text-center py-12 text-sm" style={{ color: "var(--text-tertiary)" }}>
-            No notifications
-          </div>
-        )}
-        {items.map((n) => (
-          <Link
-            key={n.id}
-            href={n.href}
-            onClick={() => markRead(n.id)}
-            className="flex items-start gap-3 px-4 py-3 rounded-lg transition-colors hover:opacity-90"
+      {/* Filters */}
+      <div className="flex items-center gap-3">
+        {(["all", "unread", "read"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className="text-xs px-3 py-1.5 rounded-full capitalize transition-colors"
             style={{
-              textDecoration: "none",
-              color: "inherit",
-              background: n.read ? "transparent" : "color-mix(in srgb, var(--accent, #486AFE) 8%, transparent)",
+              background: filter === f ? "var(--accent-indigo)" : "var(--bg-hover)",
+              color: filter === f ? "white" : "var(--text-secondary)",
             }}
           >
-            <span
-              className="shrink-0 mt-1"
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: n.read ? "var(--border)" : TYPE_COLOR[n.type],
-              }}
-            />
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* Notification list */}
+      <div className="space-y-2">
+        {filtered.map((n) => (
+          <div
+            key={n.id}
+            className={`glass flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors ${n.read ? "opacity-60" : ""}`}
+            style={{ borderLeft: `3px solid ${typeColor(n.type)}` }}
+            onClick={() => markRead(n.id)}
+          >
+            <span className="text-lg mt-0.5">{typeIcon(n.type)}</span>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className="text-sm font-medium truncate"
-                  style={{ color: "var(--text-primary)", fontWeight: n.read ? 500 : 600 }}
-                >
-                  {n.title}
-                </span>
-                <span className="text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
-                  {n.when}
-                </span>
-              </div>
-              <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
-                {n.body}
-              </p>
-              <span
-                className="inline-block mt-1 text-xs capitalize"
-                style={{ color: TYPE_COLOR[n.type] }}
-              >
-                {n.type}
+              <div className="text-sm font-medium">{n.title}</div>
+              <div className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{n.description}</div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {!n.read && (
+                <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-indigo)" }} />
+              )}
+              <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
+                {relativeTime(n.timestamp)}
               </span>
             </div>
-          </Link>
+          </div>
         ))}
+
+        {filtered.length === 0 && (
+          <div className="text-center py-12" style={{ color: "var(--text-tertiary)" }}>
+            <div className="text-4xl mb-3">🔔</div>
+            <div className="text-sm">No notifications</div>
+          </div>
+        )}
       </div>
     </div>
   );
