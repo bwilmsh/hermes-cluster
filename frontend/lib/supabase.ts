@@ -7,15 +7,29 @@
  * Server-side wrappers (cookies, service role) live in supabaseServer.ts
  * to keep this file Node-free and avoid pulling Node types into the
  * client bundle.
+ *
+ * When @supabase/ssr is not installed (e.g. fresh checkout before deps),
+ * the module degrades to demo mode — isSupabaseConfigured returns false
+ * and getBrowserClient throws a clear error.
  */
 
-import { createBrowserClient } from "@supabase/ssr";
+// Dynamic import guard — @supabase/ssr may not be installed yet
+let createBrowserClientFn: any = null;
+try {
+  // @ts-ignore — optional dependency; may not resolve during build without deps
+  createBrowserClientFn = require("@supabase/ssr").createBrowserClient;
+} catch {
+  createBrowserClientFn = null;
+}
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export const isSupabaseConfigured = Boolean(
-  SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.startsWith("https://")
+  SUPABASE_URL &&
+    SUPABASE_ANON_KEY &&
+    SUPABASE_URL.startsWith("https://") &&
+    createBrowserClientFn
 );
 
 export function getBrowserClient() {
@@ -24,7 +38,7 @@ export function getBrowserClient() {
       "Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local."
     );
   }
-  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return createBrowserClientFn(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
 export const SUPABASE_ENV = {
