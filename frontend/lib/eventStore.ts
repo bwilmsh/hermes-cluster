@@ -165,6 +165,15 @@ let events: CalendarEvent[] = [
   },
 ];
 
+/**
+ * Cached snapshot of tasks (events of type TASK).
+ * useSyncExternalStore requires a stable reference — `.filter()` creates a
+ * new array every call, so we cache and only recompute when `events` changes
+ * (inside emit()). This prevents the "getSnapshot should be cached" infinite
+ * loop React throws when the snapshot reference changes on every render.
+ */
+let tasksCache: CalendarEvent[] = events.filter((e) => e.eventType === "TASK");
+
 let dueDates: DueDate[] = [
   {
     id: "dd-1",
@@ -223,6 +232,7 @@ let dueDates: DueDate[] = [
 ];
 
 const emit = () => {
+  tasksCache = events.filter((e) => e.eventType === "TASK");
   for (const l of listeners) l();
 };
 
@@ -233,6 +243,7 @@ const subscribe = (l: Listener) => {
 
 const getSnapshot = () => events;
 const getDueSnapshot = () => dueDates;
+const getTasksSnapshot = () => tasksCache;
 
 /* ── Public API ── */
 
@@ -245,8 +256,9 @@ export function useDueDates(): DueDate[] {
 }
 
 export function useTasks(): CalendarEvent[] {
-  // Tasks = events of type TASK. The Tasks page operates on these.
-  return useSyncExternalStore(subscribe, () => events.filter((e) => e.eventType === "TASK"), () => events.filter((e) => e.eventType === "TASK"));
+  // Tasks = events of type TASK. Uses a cached snapshot (updated in emit())
+  // so React gets a stable reference and doesn't loop infinitely.
+  return useSyncExternalStore(subscribe, getTasksSnapshot, getTasksSnapshot);
 }
 
 /* ── Mutations ── */
