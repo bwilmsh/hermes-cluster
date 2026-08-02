@@ -13,3 +13,6 @@ venv/
 .turbo/
 coverage/
 .prisma/
+# Prevent dual-lockfile confusion — only frontend/package-lock.json should exist
+package-lock.json
+backend/package-lock.json
