@@ -93,7 +93,7 @@ agentsRouter.post("/:id/chat", async (req: AuthedRequest, res: Response) => {
       {
         agentId: agent.id,
         message,
-        history: agent.messages.reverse().map((m) => ({ role: m.role, content: m.content })),
+        history: agent.messages.reverse().map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })),
         businessContext: agent.memory ?? "",
         agentName: agent.name,
         agentRole: agent.role,

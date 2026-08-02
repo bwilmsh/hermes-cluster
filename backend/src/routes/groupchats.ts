@@ -46,8 +46,8 @@ groupchatsRouter.post("/", async (req: AuthedRequest, res: Response) => {
   // Patch member names with actual agent names.
   await Promise.all(
     group.members
-      .filter((m) => m.agentId && m.agent)
-      .map((m) => prisma.groupChatMember.update({ where: { id: m.id }, data: { name: m.agent!.name } }))
+      .filter((m: { agentId: string | null; agent: { name: string } | null }) => m.agentId && m.agent)
+      .map((m: { id: string; agentId: string | null; agent: { name: string } | null }) => prisma.groupChatMember.update({ where: { id: m.id }, data: { name: m.agent!.name } }))
   );
   res.status(201).json({ groupChat: group });
 });
@@ -86,18 +86,18 @@ groupchatsRouter.post("/:id/message", async (req: AuthedRequest, res: Response) 
 
   const mentionedAgentIds = detectHandoff(
     message,
-    group.members.map((m) => ({ name: m.name, agentId: m.agentId }))
+    group.members.map((m: { name: string; agentId: string | null }) => ({ name: m.name, agentId: m.agentId }))
   );
   // If no @mention, address all agent members in the room.
   const targetAgentIds =
     mentionedAgentIds.length > 0
       ? mentionedAgentIds
-      : group.members.filter((m) => m.agentId).map((m) => m.agentId!);
+      : group.members.filter((m: { agentId: string | null }) => m.agentId).map((m: { agentId: string | null }) => m.agentId!);
 
   const mentionedAgents = targetAgentIds
-    .map((id) => group.members.find((m) => m.agentId === id))
-    .filter((m): m is NonNullable<typeof m> => !!m && !!m.agent)
-    .map((m) => ({ id: m.agent!.id, name: m.agent!.name, role: m.agent!.role }));
+    .map((id: string) => group.members.find((m: { agentId: string | null }) => m.agentId === id))
+    .filter((m: any): m is NonNullable<typeof m> => !!m && !!m.agent)
+    .map((m: any) => ({ id: m.agent!.id, name: m.agent!.name, role: m.agent!.role }));
 
   startSse(res);
   try {
@@ -108,11 +108,11 @@ groupchatsRouter.post("/:id/message", async (req: AuthedRequest, res: Response) 
         `${PYTHON_URL}/group-chat`,
         {
           message,
-          mentionedAgents: mentionedAgents.map((a) => ({ id: a.id, name: a.name, role: a.role })),
+          mentionedAgents: mentionedAgents.map((a: { id: string; name: string; role: string }) => ({ id: a.id, name: a.name, role: a.role })),
           activeAgentId: agent.id,
           activeAgentName: agent.name,
           groupId: group.id,
-          history: group.messages.reverse().map((m) => ({ role: m.role, content: m.content, senderName: m.senderName })),
+          history: group.messages.reverse().map((m: { role: string; content: string; senderName: string }) => ({ role: m.role, content: m.content, senderName: m.senderName })),
         },
         (chunk) => res.write(chunk)
       );
