@@ -5,72 +5,140 @@
 /* Geist fonts loaded via next/font in layout.tsx (GeistSans.variable / GeistMono.variable) */
 
 /* ─── Design System — AI Studio Scheduler ─────────────────────────────────
-   Exceeds the reference spec: real token system, motion discipline with
-   prefers-reduced-motion, focus-visible rings, oklch colors, glassmorphism,
-   ambient glow, tabular numerals, 3px accent bars, dot-grid backgrounds.
+   Reclaim.ai / Motion-inspired: clean, minimal, blue-and-black dark mode
+   and blue-and-white light mode. ONE unified card system. Subtle shadows,
+   thin borders, no neumorphism. Lots of whitespace.
 ─────────────────────────────────────────────────────────────────────────── */
 
+/* ── Tokens — DARK MODE (default) ─────────────────────────────────────── */
 :root {
-  /* ── Color tokens — blue palette from logo ── */
-  --bg-primary: #0B1020;
-  --bg-secondary: #121833;
-  --bg-tertiary: #080C1A;
-  --bg-hover: #1A2140;
-  --border: #2A3360;
-  --border-light: #1E2645;
-  --text-primary: #9EABFC;
-  --text-secondary: #6F87FC;
-  --text-tertiary: #4866FD;
-  --accent-teal: #486AFE;
-  --accent-indigo: #4866FD;
-  --accent-rose: #486AFE;
-  --accent-amber: #9EABFC;
-  --accent-green: #6F87FC;
-  --accent-purple: #486AFE;
-  --accent-yellow: #C9CDFC;
-  --accent-blue: #4866FD;
-  --glass-bg: rgba(72, 106, 254, 0.06);
-  --glass-border: rgba(72, 106, 254, 0.15);
-  --glow-teal: rgba(72, 106, 254, 0.20);
-  --glow-indigo: rgba(72, 102, 254, 0.20);
-  --glow-purple: rgba(72, 106, 254, 0.15);
-  --dot-grid: rgba(156, 171, 252, 0.06);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-elevated: 0 10px 30px rgba(72, 106, 254, 0.12), 0 4px 12px rgba(0, 0, 0, 0.10);
+  /* Backgrounds: deep navy/black */
+  --bg-primary: #0A0E1A;
+  --bg-secondary: #0F1421;
+  --bg-tertiary: #141B2D;
+  --bg-hover: #1A2236;
+  --bg-elevated: #161E30;
+
+  /* Borders */
+  --border: #1F2A40;
+  --border-light: #182234;
+  --border-strong: #2A3A56;
+
+  /* Text: white / near-white with real contrast */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A8B3CC;
+  --text-tertiary: #6B7896;
+  --text-inverse: #0A0E1A;
+
+  /* Electric blue accents */
+  --accent: #3B6DF7;
+  --accent-hover: #4B8BFC;
+  --accent-active: #2D5BE0;
+  --accent-light: rgba(59, 109, 247, 0.12);
+  --accent-soft: rgba(59, 109, 247, 0.18);
+
+  /* Legacy aliases */
+  --accent-teal: #3B6DF7;
+  --accent-indigo: #4B8BFC;
+  --accent-rose: #3B6DF7;
+  --accent-amber: #6B7896;
+  --accent-green: #2DD4BF;
+  --accent-purple: #7C8BFC;
+  --accent-yellow: #D4D8F0;
+  --accent-blue: #4B8BFC;
+
+  /* Glass (kept for backdrop-style surfaces) */
+  --glass-bg: rgba(15, 20, 33, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  /* Glow / accent fills */
+  --glow-teal: rgba(59, 109, 247, 0.18);
+  --glow-indigo: rgba(75, 139, 252, 0.22);
+  --glow-purple: rgba(59, 109, 247, 0.15);
+
+  /* Backgrounds for dot-grid etc. */
+  --dot-grid: rgba(168, 179, 204, 0.06);
+
+  /* Shadows — subtle, layered, no neumorphism */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25);
+  --shadow-elevated: 0 20px 40px rgba(0, 0, 0, 0.45), 0 8px 16px rgba(0, 0, 0, 0.3);
+  --shadow-card: var(--shadow-sm);
+  --shadow-accent: 0 8px 24px rgba(59, 109, 247, 0.25), 0 2px 8px rgba(59, 109, 247, 0.15);
+
+  /* Radii */
   --radius: 0.625rem;
-  --radius-sm: 0.375rem;
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
   --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  /* Motion */
   --motion-fast: 150ms;
   --motion-normal: 300ms;
   --motion-slow: 500ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+/* ── Tokens — LIGHT MODE ─────────────────────────────────────────────── */
 :root.light {
-  --bg-primary: #F7F8FC;
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F0F1FA;
-  --bg-tertiary: #F0F1FA;
-  --bg-hover: #F0F1FA;
-  --border: #E8EAF5;
-  --border-light: #F0F1FA;
-  --text-primary: #1A1D33;
-  --text-secondary: #4A5578;
-  --text-tertiary: #8A94B8;
-  --accent-teal: #486AFE;
-  --accent-indigo: #4866FD;
-  --accent-rose: #486AFE;
-  --accent-amber: #6F87FC;
-  --accent-green: #6F87FC;
-  --glass-bg: rgba(72, 106, 254, 0.05);
-  --glass-border: rgba(72, 106, 254, 0.12);
-  --glow-teal: rgba(72, 106, 254, 0.15);
-  --glow-indigo: rgba(72, 102, 253, 0.15);
-  --dot-grid: rgba(72, 106, 254, 0.04);
-  --shadow-card: 0 1px 3px rgba(72, 106, 254, 0.06), 0 1px 2px rgba(72, 106, 254, 0.04);
-  --shadow-elevated: 0 10px 30px rgba(72, 106, 254, 0.10), 0 4px 12px rgba(72, 106, 254, 0.05);
+  /* Backgrounds: clean white / off-white */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8FAFC;
+  --bg-tertiary: #F1F5F9;
+  --bg-hover: #F1F5F9;
+  --bg-elevated: #FFFFFF;
+
+  /* Borders */
+  --border: #E2E8F0;
+  --border-light: #EEF2F7;
+  --border-strong: #CBD5E1;
+
+  /* Text: dark navy with strong contrast */
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-tertiary: #64748B;
+  --text-inverse: #FFFFFF;
+
+  /* Same blue accents */
+  --accent: #3B6DF7;
+  --accent-hover: #2D5BE0;
+  --accent-active: #1E48C9;
+  --accent-light: rgba(59, 109, 247, 0.08);
+  --accent-soft: rgba(59, 109, 247, 0.12);
+
+  --accent-teal: #3B6DF7;
+  --accent-indigo: #2D5BE0;
+  --accent-rose: #3B6DF7;
+  --accent-amber: #64748B;
+  --accent-green: #0D9488;
+  --accent-purple: #6366F1;
+  --accent-yellow: #CA8A04;
+  --accent-blue: #2D5BE0;
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(15, 23, 42, 0.08);
+
+  --glow-teal: rgba(59, 109, 247, 0.10);
+  --glow-indigo: rgba(45, 91, 224, 0.12);
+  --glow-purple: rgba(59, 109, 247, 0.08);
+
+  --dot-grid: rgba(15, 23, 42, 0.05);
+
+  /* Light-mode shadows — very subtle, slightly blue */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 8px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 24px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04);
+  --shadow-elevated: 0 20px 40px rgba(15, 23, 42, 0.10), 0 8px 16px rgba(15, 23, 42, 0.05);
+  --shadow-card: var(--shadow-sm);
+  --shadow-accent: 0 8px 24px rgba(59, 109, 247, 0.18), 0 2px 8px rgba(59, 109, 247, 0.10);
 }
 
 /* Tailwind v3 — theme tokens live in tailwind.config.js */
@@ -90,18 +158,60 @@ body {
   text-rendering: optimizeLegibility;
   letter-spacing: -0.01em;
 }
-::selection { background: var(--accent-indigo); color: white; }
+::selection { background: var(--accent); color: #fff; }
 
 /* ── Tabular numerals everywhere time/numbers appear ── */
 .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 
-/* ── Glassmorphism ── */
+/* ── Unified card system ──────────────────────────────────────────────
+   ONE system. .app-card is the canonical card. Old class names
+   (.glass, .saas-card, .saas-card-lg, .dash-neo-card, .dash-neo-card-lg)
+   are kept as aliases for backwards compatibility. */
+.app-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
+}
+.app-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Backwards-compat aliases */
+.glass,
+.saas-card,
+.saas-card-lg,
+.dash-neo-card,
+.dash-neo-card-lg {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
+}
 .glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: var(--radius);
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+}
+.saas-card-lg,
+.dash-neo-card-lg {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.saas-card:hover,
+.saas-card-lg:hover,
+.dash-neo-card:hover,
+.dash-neo-card-lg:hover {
+  box-shadow: var(--shadow-md);
 }
 
 /* ── Dot-grid background ── */
@@ -132,7 +242,7 @@ body {
   width: 3px;
   height: 1.1em;
   border-radius: 2px;
-  background: var(--accent-teal);
+  background: var(--accent);
   flex-shrink: 0;
 }
 
@@ -161,7 +271,7 @@ body {
 .animate-fade-slide-up { animation: fadeSlideUp var(--motion-normal) var(--ease-out) both; }
 .animate-scale-in { animation: scaleIn var(--motion-fast) var(--ease-out) both; }
 .shimmer-text {
-  background: linear-gradient(90deg, var(--text-primary) 0%, var(--accent-teal) 40%, var(--accent-indigo) 60%, var(--text-primary) 100%);
+  background: linear-gradient(90deg, var(--text-primary) 0%, var(--accent) 40%, var(--accent-indigo) 60%, var(--text-primary) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -182,7 +292,7 @@ body {
 
 /* ── Focus-visible rings (accessibility) ── */
 :focus-visible {
-  outline: 2px solid var(--accent-teal);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -193,7 +303,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
 /* ── Staggered entrance (children animate with 60ms offset) ── */
@@ -211,7 +321,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   position: relative;
 }
 .workflow-card:hover {
-  border-color: var(--accent-teal);
+  border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--glow-teal), 0 4px 20px var(--glow-teal);
 }
 .workflow-connector {
@@ -239,199 +349,78 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   bottom: 4px;
   width: 3px;
   border-radius: 0 2px 2px 0;
-  background: var(--accent-teal);
+  background: var(--accent);
 }
 
-/* ── Neomorphism ─────────────────────────────────────────────────
-   Dual-shadow system: dark shadow bottom-right, light highlight top-left.
-   Outset = cards/buttons (extruded from surface).
-   Inset  = inputs/toggles (pressed into surface).
-   Adapts to light/dark via --neo-light and --neo-dark tokens.
-─────────────────────────────────────────────────────────────────── */
-:root {
-  --neo-light: rgba(120, 145, 255, 0.08);
-  --neo-dark: rgba(8, 12, 26, 0.5);
-  --neo-light-inset: rgba(120, 145, 255, 0.06);
-  --neo-dark-inset: rgba(8, 12, 26, 0.45);
-}
-:root.light {
-  --neo-light: rgba(255, 255, 255, 0.9);
-  --neo-dark: rgba(140, 160, 220, 0.35);
-  --neo-light-inset: rgba(255, 255, 255, 0.85);
-  --neo-dark-inset: rgba(140, 160, 220, 0.30);
-}
-
-.neo-surface {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-}
-
-.neo-outset {
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  box-shadow:
-    6px 6px 12px var(--neo-dark),
-    -6px -6px 12px var(--neo-light);
-  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
-}
-.neo-outset:hover {
-  box-shadow:
-    8px 8px 16px var(--neo-dark),
-    -8px -8px 16px var(--neo-light);
-}
-.neo-outset-sm {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  box-shadow:
-    4px 4px 8px var(--neo-dark),
-    -4px -4px 8px var(--neo-light);
-}
-.neo-inset {
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  box-shadow:
-    inset 4px 4px 8px var(--neo-dark-inset),
-    inset -4px -4px 8px var(--neo-light-inset);
-}
-.neo-inset-sm {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  box-shadow:
-    inset 3px 3px 6px var(--neo-dark-inset),
-    inset -3px -3px 6px var(--neo-light-inset);
-}
-.neo-pill {
-  border-radius: 24px;
-  box-shadow:
-    6px 6px 12px var(--neo-dark),
-    -6px -6px 12px var(--neo-light);
-  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
-}
-.neo-pill:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    8px 8px 16px var(--neo-dark),
-    -8px -8px 16px var(--neo-light);
-}
-.neo-pill:active {
-  transform: translateY(0);
-  box-shadow:
-    inset 3px 3px 6px var(--neo-dark-inset),
-    inset -3px -3px 6px var(--neo-light-inset);
-}
-.neo-icon-inset {
-  border-radius: 50%;
-  box-shadow:
-    inset 3px 3px 6px var(--neo-dark-inset),
-    inset -3px -3px 6px var(--neo-light-inset);
-}
-
-/* ── Toggle switch (neomorphic) ── */
-.neo-toggle {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
-  background: var(--bg-secondary);
-  box-shadow:
-    inset 3px 3px 6px var(--neo-dark-inset),
-    inset -3px -3px 6px var(--neo-light-inset);
-  cursor: pointer;
-  transition: background var(--motion-fast) var(--ease-out);
-  flex-shrink: 0;
-}
-.neo-toggle-knob {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--text-tertiary);
-  box-shadow:
-    2px 2px 4px var(--neo-dark),
-    -2px -2px 4px var(--neo-light);
-  transition: transform var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out);
-}
-.neo-toggle.active {
-  background: oklch(0.62 0.19 270 / 0.25);
-}
-.neo-toggle.active .neo-toggle-knob {
-  transform: translateX(20px);
-  background: var(--accent-indigo);
-}
-
-/* ── SaaS Dashboard Theme ───────────────────────────────────────
-   Light-mode-only premium SaaS aesthetic.
-   Soft off-white bg, white cards, vibrant orange accent.
-   Apple + Linear + Notion inspired. Very subtle shadows.
-─────────────────────────────────────────────────────────────────── */
-:root.saas {
-  --bg-primary: #F7F8FC;
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F0F1FA;
-  --bg-hover: #F0F1FA;
-  --border: #E8EAF5;
-  --border-light: #F0F1FA;
-  --text-primary: #1A1D33;
-  --text-secondary: #4A5578;
-  --text-tertiary: #8A94B8;
-  --accent: #486AFE;
-  --accent-hover: #4866FD;
-  --accent-light: #EEF1FF;
-  --accent-purple: #486AFE;
-  --accent-yellow: #C9CDFC;
-  --accent-green: #6F87FC;
-  --accent-blue: #4866FD;
-  --accent-rose: #486AFE;
-}
-
-/* SaaS card — white, soft shadow, thin border */
-.saas-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
-}
-.saas-card:hover {
-  box-shadow: var(--shadow-md);
-}
-.saas-card-lg {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-/* SaaS button — rounded, soft */
-.saas-btn {
+/* ── Buttons: primary (blue), secondary (border), ghost (text only) ── */
+.saas-btn,
+.dash-neo-btn {
   border-radius: var(--radius-xs);
   font-weight: 500;
   transition: all var(--motion-fast) var(--ease-out);
   border: 1px solid var(--border);
   background: var(--bg-secondary);
   color: var(--text-primary);
+  cursor: pointer;
 }
-.saas-btn:hover {
+.saas-btn:hover,
+.dash-neo-btn:hover {
   background: var(--bg-hover);
+  border-color: var(--border-strong);
 }
+
 .saas-btn-primary {
   border-radius: var(--radius-xs);
   font-weight: 600;
   transition: all var(--motion-fast) var(--ease-out);
   background: var(--accent);
   color: #fff;
-  border: none;
+  border: 1px solid var(--accent);
+  cursor: pointer;
 }
 .saas-btn-primary:hover {
   background: var(--accent-hover);
+  border-color: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  box-shadow: var(--shadow-accent);
+}
+.saas-btn-primary:active {
+  transform: translateY(0);
+  background: var(--accent-active);
 }
 
-/* SaaS status pill */
-.saas-pill {
+.saas-btn-secondary {
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+  transition: all var(--motion-fast) var(--ease-out);
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+.saas-btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.saas-btn-ghost {
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+  transition: all var(--motion-fast) var(--ease-out);
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+}
+.saas-btn-ghost:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── Pills (status badges) ── */
+.saas-pill,
+.dash-neo-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -440,8 +429,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
 }
-.saas-pill::before {
+.saas-pill::before,
+.dash-neo-pill::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -449,7 +442,55 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: currentColor;
 }
 
-/* SaaS sidebar nav icon button */
+/* ── Avatars ── */
+.saas-avatar,
+.dash-neo-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ── Trend badge ── */
+.saas-trend,
+.dash-neo-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+/* ── Progress bars ── */
+.saas-progress,
+.dash-neo-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+.saas-progress-fill,
+.dash-neo-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width var(--motion-slow) var(--ease-out);
+}
+
+/* ── Sidebar nav icon button ── */
 .saas-nav-icon {
   display: flex;
   align-items: center;
@@ -460,6 +501,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   transition: all var(--motion-fast) var(--ease-out);
   color: var(--text-tertiary);
   position: relative;
+  cursor: pointer;
 }
 .saas-nav-icon:hover {
   background: var(--bg-hover);
@@ -480,6 +522,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   border-radius: 0 2px 2px 0;
   background: var(--accent);
 }
+
+/* ── Dash-neo icon (unified — was neumorphic, now flat bordered) ── */
+.dash-neo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+/* ── Dash-neo inset (was pressed neumorphic, now flat recessed surface) ── */
+.dash-neo-inset,
+.dash-neo-inset-sm {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+}
+.dash-neo-inset { border-radius: var(--radius-lg); }
+.dash-neo-inset-sm { border-radius: var(--radius); }
 
 /* ── Ask AI input — collapsed by default, expands on hover ── */
 .ask-ai {
@@ -551,7 +615,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .ask-ai:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(72, 106, 254, 0.12);
+  box-shadow: 0 0 0 3px var(--glow-teal);
 }
 .ask-ai:hover .ask-ai__label,
 .ask-ai:focus-within .ask-ai__label {
@@ -570,7 +634,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   display: none;
 }
 
-/* SaaS search input */
+/* ── SaaS search input ── */
 .saas-search {
   background: var(--bg-tertiary);
   border: 1px solid transparent;
@@ -580,49 +644,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .saas-search:focus-within {
   background: var(--bg-secondary);
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  box-shadow: 0 0 0 3px var(--glow-teal);
 }
 
-/* SaaS progress bar */
-.saas-progress {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--bg-tertiary);
-  overflow: hidden;
-}
-.saas-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width var(--motion-slow) var(--ease-out);
-}
-
-/* SaaS avatar group */
-.saas-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-/* SaaS trend badge */
-.saas-trend {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-/* SaaS timeline */
+/* ── SaaS timeline / scheduler helpers ── */
 .saas-timeline-day {
   border-right: 1px solid var(--border);
   min-height: 120px;
@@ -654,172 +679,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   border-color: var(--border);
 }
 
-/* ── Dashboard neumorphism ──────────────────────────────────────
-   Soft dual-shadow cards on a matching surface. Same layout as the
-   SaaS dashboard, but extruded/inset instead of flat borders.
-─────────────────────────────────────────────────────────────────── */
-.dash-neo {
-  --dash-surface: var(--bg-primary);
-  --dash-card: var(--bg-primary);
-}
-
-:root.light .dash-neo,
-:root.saas .dash-neo {
-  --dash-surface: #eef1f8;
-  --dash-card: #eef1f8;
-  --neo-light: rgba(255, 255, 255, 0.95);
-  --neo-dark: rgba(163, 177, 198, 0.45);
-  --neo-light-inset: rgba(255, 255, 255, 0.9);
-  --neo-dark-inset: rgba(163, 177, 198, 0.4);
-}
-
-.dash-neo-card {
-  background: var(--dash-card);
-  border-radius: 1.25rem;
-  border: none;
-  box-shadow:
-    8px 8px 16px var(--neo-dark),
-    -8px -8px 16px var(--neo-light);
-  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
-}
-.dash-neo-card:hover {
-  box-shadow:
-    10px 10px 20px var(--neo-dark),
-    -10px -10px 20px var(--neo-light);
-}
-
-.dash-neo-card-lg {
-  background: var(--dash-card);
-  border-radius: 1.5rem;
-  border: none;
-  box-shadow:
-    10px 10px 20px var(--neo-dark),
-    -10px -10px 20px var(--neo-light);
-  transition: box-shadow var(--motion-fast) var(--ease-out);
-}
-
-.dash-neo-btn {
-  background: var(--dash-card);
-  color: var(--text-primary);
-  border: none;
-  border-radius: 999px;
-  font-weight: 500;
-  box-shadow:
-    5px 5px 10px var(--neo-dark),
-    -5px -5px 10px var(--neo-light);
-  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
-  cursor: pointer;
-}
-.dash-neo-btn:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    7px 7px 14px var(--neo-dark),
-    -7px -7px 14px var(--neo-light);
-}
-.dash-neo-btn:active {
-  transform: translateY(0);
-  box-shadow:
-    inset 3px 3px 6px var(--neo-dark-inset),
-    inset -3px -3px 6px var(--neo-light-inset);
-}
-
-.dash-neo-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  background: var(--dash-card);
-  box-shadow:
-    4px 4px 8px var(--neo-dark),
-    -4px -4px 8px var(--neo-light);
-}
-
-.dash-neo-trend {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--dash-card);
-  box-shadow:
-    3px 3px 6px var(--neo-dark),
-    -3px -3px 6px var(--neo-light);
-}
-
-.dash-neo-inset {
-  background: var(--dash-card);
-  border-radius: 1rem;
-  border: none;
-  box-shadow:
-    inset 5px 5px 10px var(--neo-dark-inset),
-    inset -5px -5px 10px var(--neo-light-inset);
-}
-
-.dash-neo-inset-sm {
-  background: var(--dash-card);
-  border-radius: 0.75rem;
-  border: none;
-  box-shadow:
-    inset 3px 3px 6px var(--neo-dark-inset),
-    inset -3px -3px 6px var(--neo-light-inset);
-}
-
-.dash-neo-progress {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--dash-card);
-  box-shadow:
-    inset 2px 2px 4px var(--neo-dark-inset),
-    inset -2px -2px 4px var(--neo-light-inset);
-  overflow: hidden;
-}
-.dash-neo-progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width var(--motion-slow) var(--ease-out);
-}
-
-.dash-neo-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--dash-card);
-  box-shadow:
-    3px 3px 6px var(--neo-dark),
-    -3px -3px 6px var(--neo-light);
-}
-.dash-neo-pill::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.dash-neo-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  flex-shrink: 0;
-  box-shadow:
-    3px 3px 6px var(--neo-dark),
-    -2px -2px 4px var(--neo-light);
-}
-
+/* ── Dash-neo task (unified) ── */
 .dash-neo-task {
   border-radius: 0.75rem;
   padding: 8px 10px;
@@ -827,45 +687,43 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   font-weight: 500;
   margin: 4px 0;
   cursor: pointer;
-  border: none;
-  box-shadow:
-    3px 3px 6px var(--neo-dark),
-    -3px -3px 6px var(--neo-light);
-  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  transition:
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
 }
 .dash-neo-task:hover {
   transform: translateY(-1px);
-  box-shadow:
-    5px 5px 10px var(--neo-dark),
-    -5px -5px 10px var(--neo-light);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-strong);
 }
 
+/* ── Dash-neo timeline (unified — was inset neumorphic) ── */
 .dash-neo-timeline {
   border-radius: 1.25rem;
   overflow: hidden;
-  border: none;
-  box-shadow:
-    inset 4px 4px 10px var(--neo-dark-inset),
-    inset -4px -4px 10px var(--neo-light-inset);
-  background: var(--dash-card);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
 }
-
 .dash-neo-timeline-cell {
   min-height: 120px;
-  border-right: 1px solid color-mix(in srgb, var(--neo-dark) 25%, transparent);
+  border-right: 1px solid var(--border-light);
 }
 .dash-neo-timeline-cell:last-child {
   border-right: none;
 }
 
+/* ── Dash-neo row (unified hover) ── */
 .dash-neo-row {
   border-radius: 0.875rem;
-  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+  transition:
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
 }
 .dash-neo-row:hover {
-  box-shadow:
-    inset 3px 3px 6px var(--neo-dark-inset),
-    inset -3px -3px 6px var(--neo-light-inset);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ── Scheduler: slide nav + add-event modal ─────────────────────── */
@@ -973,16 +831,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .sched-week-cell:hover {
   background: color-mix(in srgb, var(--bg-hover) 70%, var(--bg-secondary));
-  border-color: color-mix(in srgb, var(--accent-indigo) 35%, var(--border));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
 }
 .sched-week-cell.is-today {
-  border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 1px var(--glow-indigo), 0 0 18px var(--glow-indigo);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--glow-teal), 0 0 18px var(--glow-teal);
 }
 .sched-week-cell.is-expanded {
   background: var(--bg-secondary);
-  border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 1px var(--accent-indigo), 0 8px 20px rgba(72, 102, 253, 0.20);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 8px 20px var(--glow-teal);
 }
 
 .sched-week-cell-header {
@@ -994,7 +852,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .sched-week-cell-today-bar {
   width: 3px;
   height: 16px;
-  background: var(--accent-teal);
+  background: var(--accent);
   border-radius: 2px;
   flex-shrink: 0;
 }
@@ -1029,7 +887,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .sched-week-cell-event {
   background: var(--bg-hover);
-  border-left: 2px solid var(--accent-indigo);
+  border-left: 2px solid var(--accent);
   border-radius: 6px;
   padding: 5px 7px;
   font-size: 11px;
@@ -1078,13 +936,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 /* ── Expanded day plan row (full width under the 7-cell row) ── */
 .sched-day-plan {
   background: var(--bg-secondary);
-  border: 1px solid var(--accent-indigo);
+  border: 1px solid var(--accent);
   border-radius: var(--radius);
   padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 8px 24px rgba(15, 18, 40, 0.18), 0 2px 8px rgba(72, 102, 253, 0.10);
+  box-shadow: var(--shadow-elevated);
   min-height: 0;
   overflow: hidden;
 }
@@ -1150,7 +1008,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .sched-day-plan-event {
   background: var(--bg-tertiary);
-  border-left: 3px solid var(--accent-indigo);
+  border-left: 3px solid var(--accent);
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 12px;
@@ -1258,10 +1116,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   justify-content: center;
   padding: 1rem;
   margin: 0;
-  background: rgba(15, 18, 30, 0.5);
+  background: rgba(10, 14, 26, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: schedFadeIn 0.18s ease both;
+}
+:root.light .sched-modal-overlay {
+  background: rgba(15, 23, 42, 0.35);
 }
 
 .sched-modal {
@@ -1271,7 +1132,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   border-radius: 1rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-elevated);
   animation: schedModalIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -1303,8 +1164,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .sched-input:focus {
-  border-color: var(--accent-indigo, #486AFE);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-indigo, #486AFE) 22%, transparent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .sched-switch {
@@ -1316,12 +1177,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   padding: 0;
   cursor: pointer;
   background: var(--bg-tertiary);
+  border: 1px solid var(--border);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
   transition: background 0.2s ease;
   flex-shrink: 0;
 }
 .sched-switch.on {
-  background: var(--accent-indigo, #486AFE);
+  background: var(--accent);
 }
 .sched-switch-knob {
   position: absolute;
@@ -1370,10 +1232,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
   backdrop-filter: blur(16px) saturate(1.2);
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow:
-    0 4px 14px rgba(72, 102, 253, 0.10),
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
   transition:
     transform 0.2s var(--ease-out),
@@ -1386,10 +1245,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .ai-chat-pill:hover {
   max-width: 100%;
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--accent-indigo) 40%, var(--border));
-  box-shadow:
-    0 10px 28px rgba(72, 102, 253, 0.18),
-    0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: var(--shadow-accent);
   color: var(--text-primary);
   background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
 }
@@ -1398,7 +1255,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .ai-chat-pill.open {
   max-width: 100%;
-  border-color: color-mix(in srgb, var(--accent-indigo) 50%, var(--border));
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
   color: var(--text-primary);
 }
 
@@ -1449,7 +1306,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   border: 1px solid var(--border);
   backdrop-filter: blur(20px) saturate(1.15);
   -webkit-backdrop-filter: blur(20px) saturate(1.15);
-  box-shadow: 0 20px 48px rgba(15, 18, 40, 0.22), 0 4px 16px rgba(72, 102, 253, 0.12);
+  box-shadow: var(--shadow-elevated);
   overflow: hidden;
   animation: aiChatPanelIn 0.22s var(--ease-out) both;
 }
@@ -1521,7 +1378,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .ai-chat-bubble.user {
   align-self: flex-end;
-  background: linear-gradient(135deg, #4866FD, #6F87FC);
+  background: linear-gradient(135deg, var(--accent), var(--accent-indigo));
   color: #fff;
   border-bottom-right-radius: 0.35rem;
 }
@@ -1566,9 +1423,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 .ai-chat-chip:hover {
-  border-color: var(--accent-indigo);
-  color: var(--accent-indigo);
-  background: color-mix(in srgb, var(--accent-indigo) 8%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .ai-chat-compose {
@@ -1591,8 +1448,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   outline: none;
 }
 .ai-chat-compose-input:focus {
-  border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-indigo) 18%, transparent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .ai-chat-compose-input::placeholder {
   color: var(--text-tertiary);
@@ -1603,7 +1460,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #4866FD, #6F87FC);
+  background: linear-gradient(135deg, var(--accent), var(--accent-indigo));
   color: #fff;
   font-size: 1rem;
   font-weight: 700;

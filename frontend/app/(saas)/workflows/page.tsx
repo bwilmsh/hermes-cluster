@@ -92,22 +92,22 @@ const DEMO_WORKFLOWS: Workflow[] = [
   },
 ];
 
-function statusStyle(s: string) {
+function statusMeta(s: string) {
   switch (s) {
-    case "active": return { bg: "#22C55E20", color: "#22C55E" };
-    case "paused": return { bg: "#F59E0B20", color: "#F59E0B" };
-    case "draft": return { bg: "var(--bg-hover)", color: "var(--text-tertiary)" };
-    default: return { bg: "var(--bg-hover)", color: "var(--text-tertiary)" };
+    case "active": return { color: "#22C55E", bg: "#22C55E1A", label: "Active" };
+    case "paused": return { color: "#F59E0B", bg: "#F59E0B1A", label: "Paused" };
+    case "draft": return { color: "var(--text-tertiary)", bg: "var(--bg-tertiary)", label: "Draft" };
+    default: return { color: "var(--text-tertiary)", bg: "var(--bg-tertiary)", label: "—" };
   }
 }
 
-function nodeTypeIcon(t: string) {
+function nodeTypeMeta(t: string) {
   switch (t) {
-    case "trigger": return "⚡";
-    case "action": return "⚙️";
-    case "condition": return "🔀";
-    case "delay": return "⏱";
-    default: return "●";
+    case "trigger": return { icon: "⚡", label: "Trigger" };
+    case "action": return { icon: "⚙️", label: "Action" };
+    case "condition": return { icon: "🔀", label: "Condition" };
+    case "delay": return { icon: "�", label: "Delay" };
+    default: return { icon: "●", label: t };
   }
 }
 
@@ -119,40 +119,50 @@ export default function WorkflowsPage() {
   const toggleStatus = useCallback((id: string) => {
     setWorkflows((prev) =>
       prev.map((w) =>
-        w.id === id
-          ? { ...w, status: w.status === "active" ? "paused" : "active" }
-          : w
+        w.id === id ? { ...w, status: w.status === "active" ? "paused" : "active" } : w
       )
     );
   }, []);
 
   const activeCount = workflows.filter((w) => w.status === "active").length;
   const totalRuns = workflows.reduce((a, w) => a + w.runCount, 0);
-
   const selected = workflows.find((w) => w.id === selectedWorkflow);
 
+  const stats = [
+    { label: "Active", value: activeCount, color: "#22C55E" },
+    { label: "Total", value: workflows.length, color: "var(--accent)" },
+    { label: "Total Runs", value: totalRuns, color: "var(--accent-indigo)" },
+  ];
+
   return (
-    <div className="flex flex-col gap-6 animate-fade-slide-up">
+    <div className="animate-fade-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="accent-bar text-xl font-semibold">Workflows</div>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Workflows</h1>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            Automate your work with triggers and actions
+          </p>
+        </div>
+        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "var(--bg-tertiary)" }}>
           <button
             onClick={() => setView("workflows")}
-            className="text-xs px-3 py-1.5 rounded-full transition-colors"
+            className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
             style={{
-              background: view === "workflows" ? "var(--accent-indigo)" : "var(--bg-hover)",
-              color: view === "workflows" ? "white" : "var(--text-secondary)",
+              background: view === "workflows" ? "var(--bg-secondary)" : "transparent",
+              color: view === "workflows" ? "var(--text-primary)" : "var(--text-tertiary)",
+              boxShadow: view === "workflows" ? "var(--shadow-card)" : "none",
             }}
           >
             My Workflows
           </button>
           <button
             onClick={() => setView("templates")}
-            className="text-xs px-3 py-1.5 rounded-full transition-colors"
+            className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
             style={{
-              background: view === "templates" ? "var(--accent-teal)" : "var(--bg-hover)",
-              color: view === "templates" ? "white" : "var(--text-secondary)",
+              background: view === "templates" ? "var(--bg-secondary)" : "transparent",
+              color: view === "templates" ? "var(--text-primary)" : "var(--text-tertiary)",
+              boxShadow: view === "templates" ? "var(--shadow-card)" : "none",
             }}
           >
             Templates
@@ -161,106 +171,111 @@ export default function WorkflowsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="glass p-4 text-center">
-          <div className="tnum text-2xl font-bold" style={{ color: "#22C55E" }}>{activeCount}</div>
-          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Active</div>
-        </div>
-        <div className="glass p-4 text-center">
-          <div className="tnum text-2xl font-bold" style={{ color: "var(--accent-teal)" }}>{workflows.length}</div>
-          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Total</div>
-        </div>
-        <div className="glass p-4 text-center">
-          <div className="tnum text-2xl font-bold" style={{ color: "var(--accent-indigo)" }}>{totalRuns}</div>
-          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Total Runs</div>
-        </div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {stats.map((s) => (
+          <div key={s.label} className="saas-card p-3">
+            <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{s.label}</div>
+            <div className="tnum text-2xl font-bold mt-1" style={{ color: s.color }}>{s.value}</div>
+          </div>
+        ))}
       </div>
 
       {view === "workflows" ? (
         <div className="flex gap-6">
           {/* ── Workflow list ── */}
           <div className="flex-1 space-y-3">
-            {workflows.map((w) => (
-              <div
-                key={w.id}
-                className="glass px-5 py-4 cursor-pointer transition-colors hover:brightness-110"
-                style={{
-                  borderLeft: `3px solid ${statusStyle(w.status).color}`,
-                  outline: selectedWorkflow === w.id ? "2px solid var(--accent-indigo)" : "none",
-                }}
-                onClick={() => setSelectedWorkflow(selectedWorkflow === w.id ? null : w.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{w.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium">{w.name}</div>
-                    <div className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{w.description}</div>
-                  </div>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full capitalize"
-                    style={statusStyle(w.status)}
-                  >
-                    {w.status}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleStatus(w.id); }}
-                    className="text-xs px-3 py-1 rounded-lg"
-                    style={{ background: "var(--bg-hover)", color: "var(--text-tertiary)" }}
-                  >
-                    {w.status === "active" ? "Pause" : "Activate"}
-                  </button>
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
-                    {w.nodes.length} nodes
-                  </span>
-                  <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
-                    {w.runCount} runs
-                  </span>
-                  {w.lastRunAt && (
-                    <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
-                      Last: {new Date(w.lastRunAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                      {w.lastRunStatus === "success" ? " ✓" : w.lastRunStatus === "failed" ? " ✗" : ""}
+            {workflows.map((w) => {
+              const meta = statusMeta(w.status);
+              const isSelected = selectedWorkflow === w.id;
+              return (
+                <div
+                  key={w.id}
+                  className="saas-card p-4 cursor-pointer transition-all"
+                  style={{
+                    borderLeft: `3px solid ${meta.color}`,
+                    boxShadow: isSelected
+                      ? `0 0 0 1px var(--accent)`
+                      : undefined,
+                  }}
+                  onClick={() => setSelectedWorkflow(isSelected ? null : w.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{w.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{w.name}</div>
+                      <div className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{w.description}</div>
+                    </div>
+                    <span className="saas-pill shrink-0" style={{ background: meta.bg, color: meta.color }}>
+                      {meta.label}
                     </span>
-                  )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleStatus(w.id); }}
+                      className="saas-btn px-3 py-1.5 text-xs shrink-0"
+                    >
+                      {w.status === "active" ? "Pause" : "Activate"}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-4 mt-3 pl-9">
+                    <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
+                      {w.nodes.length} nodes
+                    </span>
+                    <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
+                      {w.runCount} runs
+                    </span>
+                    {w.lastRunAt && (
+                      <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
+                        Last: {new Date(w.lastRunAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        {w.lastRunStatus === "success" ? " ✓" : w.lastRunStatus === "failed" ? " ✗" : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* ── Detail panel ── */}
+          {/* ── Detail panel — flow diagram ── */}
           {selected && (
-            <div className="w-[320px] shrink-0 glass p-5 space-y-4 animate-scale-in">
-              <div className="text-base font-semibold">{selected.icon} {selected.name}</div>
+            <div className="w-[320px] shrink-0 saas-card p-5 space-y-4 animate-scale-in">
+              <div className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+                {selected.icon} {selected.name}
+              </div>
               <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{selected.description}</div>
 
-              {/* Node pipeline */}
+              {/* Node pipeline — vertical flow diagram */}
               <div className="space-y-2">
                 <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
                   Pipeline
                 </div>
-                {selected.nodes.map((n, i) => (
-                  <div key={n.id} className="flex items-center gap-3">
-                    {/* Connector line */}
-                    {i > 0 && (
-                      <div className="absolute ml-2 -mt-5 w-0.5 h-4" style={{ background: "var(--border)" }} />
-                    )}
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                      style={{ background: "var(--bg-hover)" }}
-                    >
-                      {nodeTypeIcon(n.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium truncate">{n.label}</div>
-                      <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{n.type}</div>
-                    </div>
-                  </div>
-                ))}
+                <div className="space-y-0">
+                  {selected.nodes.map((n, i) => {
+                    const nm = nodeTypeMeta(n.type);
+                    return (
+                      <div key={n.id} className="flex items-center gap-3">
+                        {/* Node icon with connector */}
+                        <div className="flex flex-col items-center shrink-0">
+                          <div
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-base"
+                            style={{ background: "var(--bg-tertiary)", border: "1px solid var(--border)" }}
+                          >
+                            {nm.icon}
+                          </div>
+                          {i < selected.nodes.length - 1 && (
+                            <div className="w-0.5 h-4" style={{ background: "var(--border)" }} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0 pb-4">
+                          <div className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{n.label}</div>
+                          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{nm.label}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Run stats */}
-              <div className="glass p-3 space-y-1">
+              <div className="saas-card p-3 space-y-1" style={{ background: "var(--bg-tertiary)" }}>
                 <div className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
                   Total runs: {selected.runCount}
                 </div>
@@ -273,17 +288,17 @@ export default function WorkflowsPage() {
         </div>
       ) : (
         /* ── Templates view ── */
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {DEMO_TEMPLATES.map((t) => (
-            <div key={t.id} className="glass p-5 space-y-2 cursor-pointer transition-colors hover:brightness-110">
+            <div key={t.id} className="saas-card p-5 space-y-3">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{t.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium">{t.name}</div>
+                  <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{t.name}</div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{t.category}</span>
                     {t.isOfficial && (
-                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--accent-teal)", color: "white" }}>
+                      <span className="saas-pill" style={{ background: "var(--accent-light)", color: "var(--accent)" }}>
                         Official
                       </span>
                     )}
@@ -291,10 +306,7 @@ export default function WorkflowsPage() {
                 </div>
               </div>
               <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{t.description}</div>
-              <button
-                className="text-xs px-3 py-1.5 rounded-lg"
-                style={{ background: "var(--accent-indigo)", color: "white" }}
-              >
+              <button className="saas-btn-primary px-3 py-1.5 text-xs">
                 Use Template
               </button>
             </div>

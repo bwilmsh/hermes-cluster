@@ -86,21 +86,42 @@ export default function AnalyticsPage() {
   const data = PERIOD_DATA[period];
 
   const maxDaily = Math.max(...data.dailyBreakdown.map((d) => d.total));
+  const maxCat = Math.max(...data.categoryBreakdown.map((x) => x.count));
+
+  const metrics = [
+    { label: "Completed", value: data.tasksCompleted, sub: `of ${data.tasksTotal}`, color: "var(--accent)" },
+    { label: "Avg Time", value: data.avgCompletionTime, sub: "per task", color: "var(--accent-indigo)" },
+    { label: "On Time", value: `${Math.round(data.onTimeRate * 100)}%`, sub: "completion rate", color: data.onTimeRate >= 0.7 ? "#22C55E" : "#F59E0B" },
+    { label: "Day Streak", value: data.streakDays, sub: "consecutive", color: "#22C55E" },
+  ];
+
+  const scoreVerdict =
+    data.productivityScore >= 85
+      ? "Excellent — you're consistently hitting your targets."
+      : data.productivityScore >= 70
+      ? "Good — on track but room to improve on-time rate."
+      : "Needs attention — several overdue items this period.";
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-slide-up">
+    <div className="animate-fade-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="accent-bar text-xl font-semibold">Analytics</div>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Analytics</h1>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            Your productivity at a glance
+          </p>
+        </div>
+        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "var(--bg-tertiary)" }}>
           {(["This Week", "This Month", "This Quarter"] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className="text-xs px-3 py-1.5 rounded-full transition-colors"
+              className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
               style={{
-                background: period === p ? "var(--accent-indigo)" : "var(--bg-hover)",
-                color: period === p ? "white" : "var(--text-secondary)",
+                background: period === p ? "var(--bg-secondary)" : "transparent",
+                color: period === p ? "var(--text-primary)" : "var(--text-tertiary)",
+                boxShadow: period === p ? "var(--shadow-card)" : "none",
               }}
             >
               {p}
@@ -110,118 +131,102 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Key metrics */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="glass p-4 text-center">
-          <div className="tnum text-2xl font-bold" style={{ color: "var(--accent-teal)" }}>{data.tasksCompleted}</div>
-          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Completed</div>
-          <div className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>of {data.tasksTotal}</div>
-        </div>
-        <div className="glass p-4 text-center">
-          <div className="tnum text-2xl font-bold" style={{ color: "var(--accent-indigo)" }}>{data.avgCompletionTime}</div>
-          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Avg Time</div>
-        </div>
-        <div className="glass p-4 text-center">
-          <div className="tnum text-2xl font-bold" style={{ color: data.onTimeRate >= 0.7 ? "#22C55E" : "#F59E0B" }}>
-            {Math.round(data.onTimeRate * 100)}%
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        {metrics.map((m) => (
+          <div key={m.label} className="saas-card p-3">
+            <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{m.label}</div>
+            <div className="tnum text-2xl font-bold mt-1" style={{ color: m.color }}>{m.value}</div>
+            <div className="tnum text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{m.sub}</div>
           </div>
-          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>On Time</div>
-        </div>
-        <div className="glass p-4 text-center">
-          <div className="tnum text-2xl font-bold" style={{ color: "#22C55E" }}>{data.streakDays}</div>
-          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>Day Streak</div>
-        </div>
+        ))}
       </div>
 
-      {/* Productivity score */}
-      <div className="glass p-6 flex items-center gap-6">
-        <div className="relative w-24 h-24 shrink-0">
-          {/* Circular progress */}
-          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg-hover)" strokeWidth="8" />
-            <circle
-              cx="50" cy="50" r="42" fill="none"
-              stroke="var(--accent-indigo)"
-              strokeWidth="8"
-              strokeDasharray={`${data.productivityScore * 2.64} ${264 - data.productivityScore * 2.64}`}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="tnum text-xl font-bold" style={{ color: "var(--accent-indigo)" }}>{data.productivityScore}</span>
-          </div>
-        </div>
-        <div>
-          <div className="text-base font-semibold">Productivity Score</div>
-          <div className="text-sm" style={{ color: "var(--text-tertiary)" }}>
-            {data.productivityScore >= 85
-              ? "Excellent — you're consistently hitting your targets."
-              : data.productivityScore >= 70
-              ? "Good — on track but room to improve on-time rate."
-              : "Needs attention — several overdue items this period."}
-          </div>
-        </div>
-      </div>
-
-      {/* Daily/weekly bar chart */}
-      <div className="glass p-5 space-y-4">
-        <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-          Completion Trend
-        </div>
-        <div className="flex items-end gap-3 h-32">
-          {data.dailyBreakdown.map((d) => (
-            <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full flex flex-col items-center gap-0.5" style={{ height: "100px" }}>
-                {/* Total bar */}
-                <div
-                  className="w-full rounded-t-md"
-                  style={{
-                    height: `${(d.total / maxDaily) * 100}%`,
-                    background: "var(--bg-hover)",
-                  }}
-                />
-                {/* Completed bar (overlaid from bottom) */}
-                <div
-                  className="w-full rounded-md -mt-full"
-                  style={{
-                    height: `${(d.completed / maxDaily) * 100}%`,
-                    background: "var(--accent-teal)",
-                    marginTop: `-${(d.total / maxDaily) * 100}%`,
-                  }}
-                />
-              </div>
-              <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>{d.day}</span>
+      {/* Productivity score + bar chart side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        {/* Productivity score */}
+        <div className="saas-card p-5 flex items-center gap-5">
+          <div className="relative w-24 h-24 shrink-0">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg-tertiary)" strokeWidth="8" />
+              <circle
+                cx="50" cy="50" r="42" fill="none"
+                stroke="var(--accent)"
+                strokeWidth="8"
+                strokeDasharray={`${data.productivityScore * 2.64} ${264 - data.productivityScore * 2.64}`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="tnum text-xl font-bold" style={{ color: "var(--accent)" }}>{data.productivityScore}</span>
             </div>
-          ))}
-        </div>
-        <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-tertiary)" }}>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ background: "var(--accent-teal)" }} />
-            Completed
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ background: "var(--bg-hover)" }} />
-            Total
+          <div className="min-w-0">
+            <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Productivity Score</div>
+            <div className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{scoreVerdict}</div>
+          </div>
+        </div>
+
+        {/* Bar chart */}
+        <div className="saas-card p-5 lg:col-span-2 space-y-4">
+          <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+            Completion Trend
+          </div>
+          <div className="flex items-end gap-2 h-32">
+            {data.dailyBreakdown.map((d) => (
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5">
+                <div className="w-full flex flex-col items-center" style={{ height: "110px" }}>
+                  {/* Total (background) bar */}
+                  <div
+                    className="w-full rounded-t-md"
+                    style={{
+                      height: `${(d.total / maxDaily) * 100}%`,
+                      background: "var(--bg-tertiary)",
+                    }}
+                  />
+                  {/* Completed bar overlaid from bottom */}
+                  <div
+                    className="w-full rounded-md"
+                    style={{
+                      height: `${(d.completed / maxDaily) * 100}%`,
+                      background: "var(--accent)",
+                      marginTop: `-${(d.total / maxDaily) * 100}%`,
+                    }}
+                  />
+                </div>
+                <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>{d.day}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-tertiary)" }}>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm" style={{ background: "var(--accent)" }} />
+              Completed
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm" style={{ background: "var(--bg-tertiary)" }} />
+              Total
+            </div>
           </div>
         </div>
       </div>
 
       {/* Category breakdown */}
-      <div className="glass p-5 space-y-3">
+      <div className="saas-card p-5 space-y-3">
         <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
           By Category
         </div>
-        {data.categoryBreakdown.map((c) => {
-          const maxCat = Math.max(...data.categoryBreakdown.map((x) => x.count));
-          return (
-            <div key={c.category} className="flex items-center gap-3">
-              <span className="text-xs w-24 shrink-0">{c.category}</span>
-              <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ background: "var(--bg-hover)" }}>
-                <div className="h-full rounded-full" style={{ width: `${(c.count / maxCat) * 100}%`, background: c.color }} />
-              </div>
-              <span className="tnum text-xs w-8 text-right" style={{ color: c.color }}>{c.count}</span>
+        {data.categoryBreakdown.map((c) => (
+          <div key={c.category} className="flex items-center gap-3">
+            <span className="text-xs w-24 shrink-0" style={{ color: "var(--text-secondary)" }}>{c.category}</span>
+            <div className="saas-progress flex-1">
+              <div
+                className="saas-progress-fill"
+                style={{ width: `${(c.count / maxCat) * 100}%`, background: c.color }}
+              />
             </div>
-          );
-        })}
+            <span className="tnum text-xs font-medium w-8 text-right" style={{ color: c.color }}>{c.count}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { AskAIInput } from "@/components/AskAIInput";
 
 /* ── Types ── */
 interface Agent {
@@ -56,6 +55,15 @@ const DEMO_CHATS: GroupChat[] = [
   },
 ];
 
+function agentColor(name: string) {
+  const colors: Record<string, string> = {
+    "Cluster AI": "var(--accent)",
+    "Booking Agent": "#8B5CF6",
+    "Customer Memory": "#06B6D4",
+  };
+  return colors[name] || "var(--accent-indigo)";
+}
+
 export default function GroupChatsPage() {
   const [chats, setChats] = useState<GroupChat[]>(DEMO_CHATS);
   const [activeChat, setActiveChat] = useState<string>(chats[0]?.id || "");
@@ -82,9 +90,7 @@ export default function GroupChatsPage() {
 
     setChats((prev) =>
       prev.map((c) =>
-        c.id === activeChat
-          ? { ...c, messages: [...c.messages, userMsg] }
-          : c
+        c.id === activeChat ? { ...c, messages: [...c.messages, userMsg] } : c
       )
     );
     setNewMessage("");
@@ -128,9 +134,7 @@ export default function GroupChatsPage() {
 
         setChats((prev) =>
           prev.map((c) =>
-            c.id === activeChat
-              ? { ...c, messages: [...c.messages, agentMsg] }
-              : c
+            c.id === activeChat ? { ...c, messages: [...c.messages, agentMsg] } : c
           )
         );
 
@@ -157,15 +161,27 @@ export default function GroupChatsPage() {
   return (
     <div className="flex h-full gap-0 animate-fade-slide-up">
       {/* ── Left: Chat list ── */}
-      <div className="w-[260px] shrink-0 flex flex-col border-r" style={{ borderColor: "var(--border)" }}>
+      <div
+        className="w-[260px] shrink-0 flex flex-col border-r"
+        style={{ borderColor: "var(--border)" }}
+      >
         <div className="p-4 flex items-center justify-between">
-          <div className="accent-bar text-sm font-semibold">Group Chats</div>
+          <div>
+            <h1 className="text-base font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              Group Chats
+            </h1>
+            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+              {chats.length} active
+            </p>
+          </div>
           <button
             onClick={createGroupChat}
-            className="text-xs px-3 py-1.5 rounded-lg"
-            style={{ background: "var(--accent-indigo)", color: "white" }}
+            className="saas-btn-primary px-3 py-1.5 text-xs flex items-center gap-1"
           >
-            + New
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            New
           </button>
         </div>
 
@@ -176,22 +192,25 @@ export default function GroupChatsPage() {
               onClick={() => setActiveChat(c.id)}
               className="w-full text-left px-3 py-2.5 rounded-lg transition-colors"
               style={{
-                background: activeChat === c.id ? "var(--bg-hover)" : "transparent",
+                background: activeChat === c.id ? "var(--bg-tertiary)" : "transparent",
+                border: activeChat === c.id ? "1px solid var(--border)" : "1px solid transparent",
               }}
             >
-              <div className="text-sm font-medium truncate">{c.name}</div>
-              <div className="flex items-center gap-1 mt-0.5">
+              <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                {c.name}
+              </div>
+              <div className="flex items-center gap-1 mt-1.5">
                 {c.members.map((m) => (
                   <span
                     key={m.id}
-                    className="text-xs px-1.5 py-0.5 rounded"
-                    style={{ background: "var(--bg-hover)", color: "var(--text-tertiary)" }}
+                    className="text-xs px-1.5 py-0.5 rounded saas-pill"
+                    style={{ background: "var(--bg-secondary)", color: "var(--text-tertiary)", fontSize: "10px" }}
                   >
                     @{m.name.split(" ")[0]}
                   </span>
                 ))}
-                <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
-                  · {c.messages.length}
+                <span className="tnum text-xs ml-auto" style={{ color: "var(--text-tertiary)" }}>
+                  {c.messages.length}
                 </span>
               </div>
             </button>
@@ -204,16 +223,21 @@ export default function GroupChatsPage() {
         {activeChatData ? (
           <>
             {/* Chat header */}
-            <div className="px-5 py-3 flex items-center gap-3 border-b" style={{ borderColor: "var(--border)" }}>
-              <div className="text-sm font-semibold">{activeChatData.name}</div>
+            <div
+              className="px-5 py-3 flex items-center gap-3 border-b"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                {activeChatData.name}
+              </div>
               <div className="flex items-center gap-1.5">
                 {activeChatData.members.map((m) => (
                   <span
                     key={m.id}
-                    className="text-xs px-2 py-0.5 rounded-full"
+                    className="saas-pill"
                     style={{
-                      background: "var(--bg-hover)",
-                      color: m.status === "active" ? "var(--accent-teal)" : "var(--text-tertiary)",
+                      background: m.status === "active" ? "var(--accent-light)" : "var(--bg-tertiary)",
+                      color: m.status === "active" ? "var(--accent)" : "var(--text-tertiary)",
                     }}
                   >
                     {m.name}
@@ -234,31 +258,32 @@ export default function GroupChatsPage() {
                 </div>
               )}
 
-              {activeChatData.messages.map((m) => (
-                <div key={m.id} className="animate-fade-slide-up">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="text-xs font-medium"
-                      style={{
-                        color: m.senderRole === "assistant" ? "var(--accent-teal)" : "var(--accent-indigo)",
-                      }}
+              {activeChatData.messages.map((m) => {
+                const isUser = m.senderRole === "user";
+                const color = isUser ? "var(--accent)" : agentColor(m.senderName);
+                return (
+                  <div key={m.id} className="animate-fade-slide-up">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold" style={{ color }}>{m.senderName}</span>
+                      <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
+                        {m.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <div
+                      className={`max-w-[80%] px-4 py-3 rounded-xl text-sm whitespace-pre-wrap leading-relaxed ${
+                        isUser ? "ml-auto" : ""
+                      }`}
+                      style={
+                        isUser
+                          ? { background: "var(--accent)", color: "white" }
+                          : { background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }
+                      }
                     >
-                      {m.senderName}
-                    </span>
-                    <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
-                      {m.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
+                      {m.content}
+                    </div>
                   </div>
-                  <div
-                    className={`max-w-[80%] px-4 py-3 rounded-xl text-sm whitespace-pre-wrap leading-relaxed ${
-                      m.senderRole === "user" ? "ml-auto text-white" : "glass"
-                    }`}
-                    style={m.senderRole === "user" ? { background: "var(--accent-indigo)" } : {}}
-                  >
-                    {m.content}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={endRef} />
             </div>
 
@@ -272,14 +297,17 @@ export default function GroupChatsPage() {
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                   placeholder="@mention agents for waterfall handoff…"
                   disabled={streaming}
-                  className="flex-1 px-4 py-2.5 rounded-xl text-sm"
-                  style={{ background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm"
+                  style={{
+                    background: "var(--bg-tertiary)",
+                    color: "var(--text-primary)",
+                    border: "1px solid var(--border)",
+                  }}
                 />
                 <button
                   onClick={sendMessage}
                   disabled={streaming || !newMessage.trim()}
-                  className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40"
-                  style={{ background: "var(--accent-indigo)", color: "white" }}
+                  className="saas-btn-primary px-4 py-2.5 rounded-lg text-sm font-medium disabled:opacity-40"
                 >
                   Send
                 </button>

@@ -35,11 +35,22 @@ function typeIcon(t: string) {
 function typeColor(t: string) {
   switch (t) {
     case "overdue": return "#F43F5E";
-    case "reminder": return "var(--accent-teal)";
+    case "reminder": return "var(--accent)";
     case "achievement": return "#22C55E";
     case "system": return "var(--text-tertiary)";
     case "mention": return "var(--accent-indigo)";
     default: return "var(--text-tertiary)";
+  }
+}
+
+function typeLabel(t: string) {
+  switch (t) {
+    case "overdue": return "Overdue";
+    case "reminder": return "Reminder";
+    case "achievement": return "Achievement";
+    case "system": return "System";
+    case "mention": return "Mention";
+    default: return "—";
   }
 }
 
@@ -75,74 +86,109 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-slide-up">
-      <div className="flex items-center justify-between">
-        <div className="accent-bar text-xl font-semibold">Notifications</div>
-        <div className="flex items-center gap-3">
+    <div className="animate-fade-slide-up">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Notifications</h1>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : "All caught up"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
-              className="text-xs px-3 py-1.5 rounded-full"
-              style={{ background: "var(--bg-hover)", color: "var(--text-tertiary)" }}
+              className="saas-btn px-3 py-2 text-sm"
             >
               Mark all read
             </button>
           )}
-          <span className="tnum text-xs px-2.5 py-1 rounded-full" style={{ background: unreadCount > 0 ? "var(--accent-indigo)" : "var(--bg-hover)", color: unreadCount > 0 ? "white" : "var(--text-tertiary)" }}>
-            {unreadCount} unread
-          </span>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3">
+      {/* Filter tabs */}
+      <div className="flex items-center gap-1 mb-6 p-1 rounded-lg" style={{ background: "var(--bg-tertiary)", width: "fit-content" }}>
         {(["all", "unread", "read"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className="text-xs px-3 py-1.5 rounded-full capitalize transition-colors"
+            className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize"
             style={{
-              background: filter === f ? "var(--accent-indigo)" : "var(--bg-hover)",
-              color: filter === f ? "white" : "var(--text-secondary)",
+              background: filter === f ? "var(--bg-secondary)" : "transparent",
+              color: filter === f ? "var(--text-primary)" : "var(--text-tertiary)",
+              boxShadow: filter === f ? "var(--shadow-card)" : "none",
             }}
           >
-            {f}
+            {f === "unread" ? `Unread · ${unreadCount}` : f}
           </button>
         ))}
       </div>
 
-      {/* Notification list */}
-      <div className="space-y-2">
-        {filtered.map((n) => (
-          <div
-            key={n.id}
-            className={`glass flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors ${n.read ? "opacity-60" : ""}`}
-            style={{ borderLeft: `3px solid ${typeColor(n.type)}` }}
-            onClick={() => markRead(n.id)}
-          >
-            <span className="text-lg mt-0.5">{typeIcon(n.type)}</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium">{n.title}</div>
-              <div className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{n.description}</div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {!n.read && (
-                <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-indigo)" }} />
-              )}
-              <span className="tnum text-xs" style={{ color: "var(--text-tertiary)" }}>
-                {relativeTime(n.timestamp)}
-              </span>
-            </div>
-          </div>
-        ))}
+      {/* Timeline */}
+      <div className="relative">
+        {/* Vertical line */}
+        <div
+          className="absolute left-5 top-0 bottom-0 w-px"
+          style={{ background: "var(--border)" }}
+        />
 
-        {filtered.length === 0 && (
-          <div className="text-center py-12" style={{ color: "var(--text-tertiary)" }}>
-            <div className="text-4xl mb-3">🔔</div>
-            <div className="text-sm">No notifications</div>
-          </div>
-        )}
+        <div className="space-y-3">
+          {filtered.map((n) => {
+            const color = typeColor(n.type);
+            return (
+              <div
+                key={n.id}
+                className="relative flex items-start gap-4 cursor-pointer"
+                onClick={() => markRead(n.id)}
+                style={{ opacity: n.read ? 0.6 : 1 }}
+              >
+                {/* Icon node on the timeline */}
+                <div
+                  className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full shrink-0"
+                  style={{
+                    background: "var(--bg-secondary)",
+                    border: `2px solid ${color}`,
+                  }}
+                >
+                  <span className="text-base">{typeIcon(n.type)}</span>
+                </div>
+
+                {/* Content card */}
+                <div className="saas-card p-4 flex-1 min-w-0">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="saas-pill" style={{ background: `${color}1A`, color }}>
+                          {typeLabel(n.type)}
+                        </span>
+                        {!n.read && (
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ background: "var(--accent)" }}
+                          />
+                        )}
+                      </div>
+                      <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{n.title}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{n.description}</div>
+                    </div>
+                    <span className="tnum text-xs shrink-0" style={{ color: "var(--text-tertiary)" }}>
+                      {relativeTime(n.timestamp)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-16" style={{ color: "var(--text-tertiary)" }}>
+          <div className="text-4xl mb-3">🔔</div>
+          <div className="text-sm">No notifications</div>
+        </div>
+      )}
     </div>
   );
 }
