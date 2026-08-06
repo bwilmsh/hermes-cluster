@@ -1276,22 +1276,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   flex-shrink: 0;
 }
 
-/* Invisible full-screen backdrop — catches clicks outside the chat panel to close it */
-.ai-chat-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 8999;
-  background: rgba(0, 0, 0, 0.25);
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: default;
-  animation: aiChatBackdropIn 0.18s var(--ease-out) both;
-}
-@keyframes aiChatBackdropIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* (backdrop removed — now using document mousedown listener instead) */
 
 /* Expanded panel */
 .ai-chat-panel {

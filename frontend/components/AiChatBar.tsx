@@ -13,34 +13,34 @@ function aiReply(input: string, page: string): string {
   const q = input.trim().toLowerCase();
 
   if (/\b(event|meeting|appointment|schedule)\b/.test(q) && /\b(add|create|book|set|make|plan)\b/.test(q)) {
-    return "Got it — I can add that to your calendar. Open **Scheduler**, double-click a date, and fill in the time, title, and reminder. Or tell me the exact day and time (e.g. “Friday 3pm sync”) and I’ll guide the rest.";
+    return "Got it — I can add that to your calendar. Open **Scheduler**, double-click a date, and fill in the time, title, and reminder. Or tell me the exact day and time (e.g. 'Friday 3pm sync') and I'll guide the rest.";
   }
   if (/\b(task|todo|to-do)\b/.test(q) && /\b(add|create|make|new)\b/.test(q)) {
-    return "Sure — go to **Tasks** and tap **+ New Task**, or describe it here (title + project). I’ll keep it on your list for this week.";
+    return "Sure — go to **Tasks** and tap **+ New Task**, or describe it here (title + project). I'll keep it on your list for this week.";
   }
   if (/\b(week|upcoming|this week|what.?s on|agenda|schedule)\b/.test(q)) {
-    return "Here’s a quick look at your week: standup and client work early, demo mid-week, sprint review and retro later. Open **Scheduler** or **Due Dates** for the full timeline — or ask me about a specific day.";
+    return "Here's a quick look at your week: standup and client work early, demo mid-week, sprint review and retro later. Open **Scheduler** or **Due Dates** for the full timeline — or ask me about a specific day.";
   }
   if (/\b(deadline|due|overdue)\b/.test(q)) {
-    return "Check **Due Dates** for what’s urgent. I can help prioritize — say “what’s due tomorrow” or “show high priority deadlines.”";
+    return "Check **Due Dates** for what's urgent. I can help prioritize — say 'what's due tomorrow' or 'show high priority deadlines.'";
   }
   if (/\b(habit|goal)\b/.test(q)) {
-    return "Habits and goals live under **Habits** and **Goals**. Tell me what you want to track and how often, and I’ll help you set it up.";
+    return "Habits and goals live under **Habits** and **Goals**. Tell me what you want to track and how often, and I'll help you set it up.";
   }
   if (/\b(help|what can you|how do)\b/.test(q)) {
-    return "I can help you **add events**, **create tasks**, and review **what’s upcoming this week**. Try: “Add a meeting Friday at 2”, “New task: ship dashboard”, or “What’s on this week?”";
+    return "I can help you **add events**, **create tasks**, and review **what's upcoming this week**. Try: 'Add a meeting Friday at 2', 'New task: ship dashboard', or 'What's on this week?'";
   }
 
   const pageHint =
     page.includes("scheduler")
-      ? "You’re on the calendar — double-click a day to add an event, or tell me what to schedule."
+      ? "You're on the calendar — double-click a day to add an event, or tell me what to schedule."
       : page.includes("task")
-        ? "You’re on Tasks — ask me to create one or filter what’s open."
+        ? "You're on Tasks — ask me to create one or filter what's open."
         : page.includes("dashboard")
-          ? "From the dashboard I can jump you to calendar, tasks, or this week’s agenda."
+          ? "From the dashboard I can jump you to calendar, tasks, or this week's agenda."
           : "I can help add events, tasks, or summarize your week from any page.";
 
-  return `${pageHint}\n\nYou said: “${input.trim()}”. Try something like “what’s upcoming this week” or “add an event tomorrow at 10.”`;
+  return `${pageHint}\n\nYou said: '${input.trim()}'. Try something like 'what's upcoming this week' or 'add an event tomorrow at 10.'`;
 }
 
 export function AiChatBar() {
@@ -51,12 +51,13 @@ export function AiChatBar() {
       id: "welcome",
       role: "assistant",
       content:
-        "Hi — I’m your AI assistant. Ask me to **add events**, **create tasks**, or show **what’s upcoming this week**.",
+        "Hi — I'm your AI assistant. Ask me to **add events**, **create tasks**, or show **what's upcoming this week**.",
     },
   ]);
   const [busy, setBusy] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -66,6 +67,24 @@ export function AiChatBar() {
       listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [open, messages, busy]);
+
+  // Close when clicking anywhere outside the chat root
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    // Use setTimeout to avoid the click that opened the chat from immediately closing it
+    const timer = window.setTimeout(() => {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [open]);
 
   const send = (e?: FormEvent) => {
     e?.preventDefault();
@@ -104,17 +123,7 @@ export function AiChatBar() {
   };
 
   return (
-    <div className="ai-chat-root" aria-live="polite">
-      {/* Click-outside backdrop — closes the chat when clicking anywhere else on the page */}
-      {open && (
-        <button
-          type="button"
-          className="ai-chat-backdrop"
-          aria-label="Close chat"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
+    <div ref={rootRef} className="ai-chat-root" aria-live="polite">
       {/* Expanded chat panel */}
       {open && (
         <div className="ai-chat-panel">
@@ -157,7 +166,7 @@ export function AiChatBar() {
 
           <div className="ai-chat-quick">
             {[
-              "What’s upcoming this week?",
+              "What's upcoming this week?",
               "Add an event",
               "Create a task",
             ].map((chip) => (
