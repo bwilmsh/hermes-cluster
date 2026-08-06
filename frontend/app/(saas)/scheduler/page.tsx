@@ -475,6 +475,19 @@ function WeekView({
   const weekStart = startOfWeek(cursor);
   const now = new Date();
   const [expandedIso, setExpandedIso] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close expanded day when clicking outside the calendar
+  useEffect(() => {
+    if (!expandedIso) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setExpandedIso(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [expandedIso]);
 
   const days = useMemo(
     () => DAYS.map((label, i) => {
@@ -491,7 +504,7 @@ function WeekView({
   const expandedDay = expandedIso ? days.find((d) => d.iso === expandedIso) ?? null : null;
 
   return (
-    <div className="sched-week-anim">
+    <div className="sched-week-anim" ref={containerRef}>
       {/* Row 1: 7 day cells. The expanded one widens (~2x) and the others shrink. */}
       <div
         className="sched-week-row"
